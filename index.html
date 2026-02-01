@@ -415,7 +415,7 @@
             totalDeposit: 0,
             totalWon: 0,
             totalLost: 0,
-            currentBet: 100,
+            currentBet: 0,
             minesCount: 3,
             currentWin: 0,
             gameActive: false,
@@ -677,8 +677,8 @@
 
         function revealTile(index) {
             if (!gameState.gameActive) {
-                if (gameState.balance < gameState.currentBet) {
-                    showMessage('Insufficient balance! Please deposit funds.', 'error');
+                if (gameState.currentBet === 0) {
+                    showMessage('Please set bet amount first!', 'error');
                     return;
                 }
                 startGame();
@@ -725,12 +725,7 @@
         }
 
         function startGame() {
-            if (gameState.balance < gameState.currentBet) {
-                showMessage('Insufficient balance!', 'error');
-                return;
-            }
-
-            gameState.balance -= gameState.currentBet;
+            // Balance already deducted when bet was set
             gameState.gameActive = true;
             gameState.revealedTiles = 0;
             gameState.currentWin = 0;
@@ -757,6 +752,7 @@
             showMessage(`Cashed out Rs ${gameState.currentWin}! 🎉`, 'success');
             
             gameState.currentWin = 0;
+            gameState.currentBet = 0; // Reset bet amount to 0 on cashout
             gameState.gameActive = false;
             document.getElementById('cashoutBtn').disabled = true;
             
@@ -772,6 +768,7 @@
                 gameState.totalLost += gameState.currentBet;
                 showMessage(`Game Over! Lost Rs ${gameState.currentBet} 💔`, 'error');
                 gameState.currentWin = 0;
+                gameState.currentBet = 0; // Reset bet amount to 0 when game is lost
             }
 
             updateDisplay();
@@ -857,6 +854,7 @@
 
             gameState.balance += amount;
             gameState.totalDeposit += amount;
+            gameState.currentBet = 0; // Reset bet amount to 0 on deposit
             updateDisplay();
             closeModal('depositModal');
             showMessage(`Successfully deposited Rs ${amount}! 💰`, 'success');
@@ -876,6 +874,12 @@
             }
 
             gameState.balance -= amount;
+            
+            // If balance becomes 0, reset bet amount to 0
+            if (gameState.balance === 0) {
+                gameState.currentBet = 0;
+            }
+            
             updateDisplay();
             closeModal('withdrawModal');
             showMessage(`Successfully withdrew Rs ${amount}! 💸`, 'success');
@@ -899,10 +903,12 @@
                 return;
             }
 
+            // Deduct balance immediately when bet is set
+            gameState.balance -= amount;
             gameState.currentBet = amount;
             updateDisplay();
             closeModal('betModal');
-            showMessage(`Bet set to Rs ${amount}`, 'success');
+            showMessage(`Bet set to Rs ${amount}. Balance deducted. Start playing!`, 'success');
         }
 
         function confirmMines() {
