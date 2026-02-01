@@ -21,6 +21,99 @@
             padding: 20px;
         }
 
+        .login-container {
+            background: rgba(20, 40, 80, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 100%;
+            display: none;
+        }
+
+        .login-container.active {
+            display: block;
+        }
+
+        .login-title {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-input-group {
+            margin-bottom: 20px;
+        }
+
+        .login-input-group label {
+            display: block;
+            color: #FFD700;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .login-input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #4169E1;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user-name {
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #DC143C, #8B0000);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            opacity: 0.9;
+        }
+
         .game-container {
             background: rgba(20, 40, 80, 0.95);
             border-radius: 20px;
@@ -28,6 +121,11 @@
             box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
             max-width: 600px;
             width: 100%;
+            display: none;
+        }
+
+        .game-container.active {
+            display: block;
         }
 
         .header {
@@ -311,7 +409,25 @@
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <!-- Login Container -->
+    <div class="login-container active" id="loginContainer">
+        <div class="login-title">MINES JACKPOT</div>
+        <div class="login-input-group">
+            <label>Complete Name</label>
+            <input type="text" id="loginName" placeholder="Enter your full name" />
+        </div>
+        <div class="login-input-group">
+            <label>Phone Number</label>
+            <input type="tel" id="loginPhone" placeholder="+92 300 1234567" />
+        </div>
+        <button class="login-btn" onclick="handleLogin()">LOGIN & START PLAYING</button>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+        <div class="user-info">
+            <span class="user-name" id="userName"></span>
+            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
         <div class="header">
             <div class="title">MINES</div>
             <button class="deposit-btn" onclick="openDepositModal()">💰 DEPOSIT</button>
@@ -411,6 +527,8 @@
 
     <script>
         let gameState = {
+            userName: '',
+            userPhone: '',
             balance: 0,
             totalDeposit: 0,
             totalWon: 0,
@@ -422,6 +540,72 @@
             revealedTiles: 0,
             minePositions: []
         };
+
+        // Save game state to localStorage
+        function saveGameState() {
+            localStorage.setItem('minesGameState', JSON.stringify(gameState));
+        }
+
+        // Load game state from localStorage
+        function loadGameState() {
+            const saved = localStorage.getItem('minesGameState');
+            if (saved) {
+                const loadedState = JSON.parse(saved);
+                gameState = { ...gameState, ...loadedState };
+                // Don't restore active game state
+                gameState.gameActive = false;
+                gameState.currentWin = 0;
+                gameState.revealedTiles = 0;
+                gameState.minePositions = [];
+            }
+        }
+
+        // Handle login
+        function handleLogin() {
+            const name = document.getElementById('loginName').value.trim();
+            const phone = document.getElementById('loginPhone').value.trim();
+
+            if (!name || name.length < 3) {
+                alert('Please enter your complete name (minimum 3 characters)');
+                return;
+            }
+
+            if (!phone || phone.length < 10) {
+                alert('Please enter a valid phone number');
+                return;
+            }
+
+            // Validate phone number format
+            const phoneRegex = /^(\+92|0)?[0-9]{10}$/;
+            if (!phoneRegex.test(phone.replace(/[\s-]/g, ''))) {
+                alert('Please enter a valid Pakistani phone number');
+                return;
+            }
+
+            gameState.userName = name;
+            gameState.userPhone = phone;
+            
+            // Save user data
+            saveGameState();
+            
+            // Show game, hide login
+            document.getElementById('loginContainer').classList.remove('active');
+            document.getElementById('gameContainer').classList.add('active');
+            document.getElementById('userName').textContent = name;
+            
+            showMessage(`Welcome ${name}! 🎮`, 'success');
+        }
+
+        // Handle logout
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout? Your balance will be saved.')) {
+                saveGameState();
+                document.getElementById('gameContainer').classList.remove('active');
+                document.getElementById('loginContainer').classList.add('active');
+                document.getElementById('loginName').value = '';
+                document.getElementById('loginPhone').value = '';
+            }
+        }
 
         // Create professional silver coin SVG - realistic iron/steel metal texture
         function createSilverCoin() {
@@ -656,6 +840,19 @@
 
         // Initialize game
         function initGame() {
+            // Load saved game state
+            loadGameState();
+            
+            // Check if user is logged in
+            if (gameState.userName && gameState.userPhone) {
+                document.getElementById('loginContainer').classList.remove('active');
+                document.getElementById('gameContainer').classList.add('active');
+                document.getElementById('userName').textContent = gameState.userName;
+            } else {
+                document.getElementById('loginContainer').classList.add('active');
+                document.getElementById('gameContainer').classList.remove('active');
+            }
+            
             createGrid();
             updateDisplay();
         }
@@ -759,6 +956,7 @@
             document.getElementById('cashoutBtn').disabled = true;
             
             updateDisplay();
+            saveGameState(); // Save to localStorage
             revealAllTiles();
         }
 
@@ -774,6 +972,7 @@
             }
 
             updateDisplay();
+            saveGameState(); // Save to localStorage
             revealAllTiles();
         }
 
@@ -858,6 +1057,7 @@
             gameState.totalDeposit += amount;
             gameState.currentBet = 0; // Reset bet amount to 0 on deposit
             updateDisplay();
+            saveGameState(); // Save to localStorage
             closeModal('depositModal');
             showMessage(`Successfully deposited Rs ${amount}! 💰`, 'success');
             document.getElementById('depositAmount').value = '';
@@ -883,6 +1083,7 @@
             }
             
             updateDisplay();
+            saveGameState(); // Save to localStorage
             closeModal('withdrawModal');
             showMessage(`Successfully withdrew Rs ${amount}! 💸`, 'success');
             document.getElementById('withdrawAmount').value = '';
@@ -909,6 +1110,7 @@
             gameState.balance -= amount;
             gameState.currentBet = amount;
             updateDisplay();
+            saveGameState(); // Save to localStorage
             closeModal('betModal');
             showMessage(`Bet set to Rs ${amount}. Balance deducted. Start playing!`, 'success');
         }
