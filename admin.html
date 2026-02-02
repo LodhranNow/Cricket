@@ -198,9 +198,7 @@ button {
 <div id="dashboard" class="container">
     <div class="header">
         <h1>🎮 Admin Dashboard</h1>
-        <div style="display: flex; gap: 10px;">
-            <button class="logout-btn" onclick="adminLogout()">Logout</button>
-        </div>
+        <button class="logout-btn" onclick="adminLogout()">Logout</button>
     </div>
 
     <div class="stats">
@@ -281,20 +279,15 @@ window.dbUpdate = update;
 window.dbOnValue = onValue;
 window.dbRemove = remove;
 
-console.log('✅ Firebase initialized successfully!');
+console.log('✅ Firebase initialized!');
 </script>
 
 <script>
 const ADMIN_PASSWORD = 'admin123';
-
 let currentEditUser = null;
-let usersListener = null;
-let depositsListener = null;
-let withdrawsListener = null;
 
 function adminLogin() {
     const password = document.getElementById('adminPassword').value;
-    
     if (password === ADMIN_PASSWORD) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('dashboard').classList.add('active');
@@ -306,27 +299,21 @@ function adminLogin() {
 }
 
 function adminLogout() {
-    if (confirm('Logout?')) {
-        location.reload();
-    }
+    if (confirm('Logout?')) location.reload();
 }
 
 function setupRealTimeListeners() {
-    const usersRef = window.dbRef(window.db, 'users');
-    usersListener = window.dbOnValue(usersRef, (snapshot) => {
+    window.dbOnValue(window.dbRef(window.db, 'users'), () => {
         loadPlayers();
         loadUsers();
         updateStats();
     });
     
-    const depositsRef = window.dbRef(window.db, 'depositRequests');
-    depositsListener = window.dbOnValue(depositsRef, (snapshot) => {
+    window.dbOnValue(window.dbRef(window.db, 'depositRequests'), () => {
         loadDeposits();
-        updateStats();
     });
     
-    const withdrawsRef = window.dbRef(window.db, 'withdrawRequests');
-    withdrawsListener = window.dbOnValue(withdrawsRef, (snapshot) => {
+    window.dbOnValue(window.dbRef(window.db, 'withdrawRequests'), () => {
         loadWithdraws();
         updateStats();
     });
@@ -337,13 +324,12 @@ async function loadAllData() {
     await loadUsers();
     await loadDeposits();
     await loadWithdraws();
-    updateStats();
+    await updateStats();
 }
 
 async function loadPlayers() {
     try {
-        const usersRef = window.dbRef(window.db, 'users');
-        const snapshot = await window.dbGet(usersRef);
+        const snapshot = await window.dbGet(window.dbRef(window.db, 'users'));
         const content = document.getElementById('playersContent');
         
         if (!snapshot.exists()) {
@@ -352,24 +338,29 @@ async function loadPlayers() {
         }
         
         const users = snapshot.val();
-        let usersArray = Object.entries(users).map(([phone, data]) => ({ phone, ...data }));
-        usersArray.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+        let usersArray = Object.entries(users).map(([phone, data]) => ({ 
+            phone, 
+            name: data.name,
+            balance: data.balance || 0 
+        }));
+        
+        usersArray.sort((a, b) => b.balance - a.balance);
         
         let html = '';
         usersArray.forEach(user => {
-            const balance = user.balance || 0;
             html += `
                 <div class="player-card">
                     <div>
                         <div class="player-name">${user.name}</div>
                         <div class="player-phone">📱 ${user.phone}</div>
                     </div>
-                    <div class="player-balance">Rs ${balance.toFixed(2)}</div>
+                    <div class="player-balance">Rs ${user.balance.toFixed(0)}</div>
                 </div>
             `;
         });
         
         content.innerHTML = html;
+        console.log('✅ Players loaded:', usersArray.length);
     } catch (error) {
         console.error('Error loading players:', error);
     }
@@ -377,8 +368,7 @@ async function loadPlayers() {
 
 async function loadUsers() {
     try {
-        const usersRef = window.dbRef(window.db, 'users');
-        const snapshot = await window.dbGet(usersRef);
+        const snapshot = await window.dbGet(window.dbRef(window.db, 'users'));
         const content = document.getElementById('usersContent');
         
         if (!snapshot.exists()) {
@@ -401,13 +391,14 @@ async function loadUsers() {
                             Edit Balance
                         </button>
                     </div>
-                    <div class="card-amount">Rs ${(user.balance || 0).toFixed(2)}</div>
-                    <div class="card-info">Deposit: Rs ${(user.totalDeposit || 0).toFixed(2)} | Withdraw: Rs ${(user.totalWithdraw || 0).toFixed(2)}</div>
+                    <div class="card-amount">Rs ${(user.balance || 0).toFixed(0)}</div>
+                    <div class="card-info">Deposit: Rs ${(user.totalDeposit || 0).toFixed(0)} | Withdraw: Rs ${(user.totalWithdraw || 0).toFixed(0)}</div>
                 </div>
             `;
         });
         
         content.innerHTML = html;
+        console.log('✅ Users loaded');
     } catch (error) {
         console.error('Error loading users:', error);
     }
@@ -415,8 +406,7 @@ async function loadUsers() {
 
 async function loadDeposits() {
     try {
-        const depositsRef = window.dbRef(window.db, 'depositRequests');
-        const snapshot = await window.dbGet(depositsRef);
+        const snapshot = await window.dbGet(window.dbRef(window.db, 'depositRequests'));
         const content = document.getElementById('depositsContent');
         
         if (!snapshot.exists()) {
@@ -467,8 +457,7 @@ async function loadDeposits() {
 
 async function loadWithdraws() {
     try {
-        const withdrawsRef = window.dbRef(window.db, 'withdrawRequests');
-        const snapshot = await window.dbGet(withdrawsRef);
+        const snapshot = await window.dbGet(window.dbRef(window.db, 'withdrawRequests'));
         const content = document.getElementById('withdrawsContent');
         
         if (!snapshot.exists()) {
@@ -520,12 +509,10 @@ async function loadWithdraws() {
 
 async function updateStats() {
     try {
-        const usersRef = window.dbRef(window.db, 'users');
-        const usersSnapshot = await window.dbGet(usersRef);
-        const users = usersSnapshot.exists() ? usersSnapshot.val() : {};
+        const usersSnapshot = await window.dbGet(window.dbRef(window.db, 'users'));
+        const withdrawsSnapshot = await window.dbGet(window.dbRef(window.db, 'withdrawRequests'));
         
-        const withdrawsRef = window.dbRef(window.db, 'withdrawRequests');
-        const withdrawsSnapshot = await window.dbGet(withdrawsRef);
+        const users = usersSnapshot.exists() ? usersSnapshot.val() : {};
         const withdraws = withdrawsSnapshot.exists() ? Object.values(withdrawsSnapshot.val()) : [];
         
         const totalUsers = Object.keys(users).length;
@@ -534,7 +521,9 @@ async function updateStats() {
             .reduce((sum, w) => sum + (w.amount || 0), 0);
         
         document.getElementById('totalUsers').textContent = totalUsers;
-        document.getElementById('totalWithdrawals').textContent = totalWithdrawals.toFixed(2);
+        document.getElementById('totalWithdrawals').textContent = totalWithdrawals.toFixed(0);
+        
+        console.log('✅ Stats updated - Users:', totalUsers, 'Withdrawals:', totalWithdrawals);
     } catch (error) {
         console.error('Error updating stats:', error);
     }
@@ -549,63 +538,52 @@ async function approveDeposit(depositKey, phone, amount) {
         
         if (userSnapshot.exists()) {
             const userData = userSnapshot.val();
-            const newBalance = (userData.balance || 0) + amount;
-            const newTotalDeposit = (userData.totalDeposit || 0) + amount;
-            
             await window.dbUpdate(userRef, {
-                balance: newBalance,
-                totalDeposit: newTotalDeposit
+                balance: (userData.balance || 0) + amount,
+                totalDeposit: (userData.totalDeposit || 0) + amount
             });
         }
         
-        const depositRef = window.dbRef(window.db, `depositRequests/${depositKey}`);
-        await window.dbUpdate(depositRef, {
+        await window.dbUpdate(window.dbRef(window.db, `depositRequests/${depositKey}`), {
             status: 'approved',
             approvedAt: Date.now()
         });
         
-        alert('✅ Deposit approved! User balance updated.');
+        alert('✅ Deposit approved!');
         loadAllData();
     } catch (error) {
-        console.error('Error approving deposit:', error);
-        alert('❌ Error! Try again.');
+        console.error('Error:', error);
+        alert('❌ Error!');
     }
 }
 
 async function rejectDeposit(depositKey) {
     if (!confirm('Reject this deposit?')) return;
-    
     try {
-        const depositRef = window.dbRef(window.db, `depositRequests/${depositKey}`);
-        await window.dbUpdate(depositRef, {
+        await window.dbUpdate(window.dbRef(window.db, `depositRequests/${depositKey}`), {
             status: 'rejected'
         });
-        
         alert('Deposit rejected');
         loadAllData();
     } catch (error) {
-        console.error('Error rejecting deposit:', error);
+        console.error('Error:', error);
     }
 }
 
 async function deleteDeposit(depositKey) {
     if (!confirm('Delete this deposit request?')) return;
-    
     try {
-        const depositRef = window.dbRef(window.db, `depositRequests/${depositKey}`);
-        await window.dbRemove(depositRef);
-        
-        alert('✅ Deposit deleted!');
+        await window.dbRemove(window.dbRef(window.db, `depositRequests/${depositKey}`));
+        alert('✅ Deleted!');
         loadAllData();
     } catch (error) {
-        console.error('Error deleting deposit:', error);
-        alert('❌ Error! Try again.');
+        console.error('Error:', error);
     }
 }
 
 async function approveWithdraw(withdrawKey, phone, amount) {
     if (!confirm('Step 1: Have you sent money to user?')) return;
-    if (!confirm('Step 2: Confirm approval? Balance will be deducted.')) return;
+    if (!confirm('Step 2: Confirm approval?')) return;
     
     try {
         const userRef = window.dbRef(window.db, `users/${phone}`);
@@ -613,57 +591,46 @@ async function approveWithdraw(withdrawKey, phone, amount) {
         
         if (userSnapshot.exists()) {
             const userData = userSnapshot.val();
-            const newBalance = (userData.balance || 0) - amount;
-            const newTotalWithdraw = (userData.totalWithdraw || 0) + amount;
-            
             await window.dbUpdate(userRef, {
-                balance: Math.max(0, newBalance),
-                totalWithdraw: newTotalWithdraw
+                balance: Math.max(0, (userData.balance || 0) - amount),
+                totalWithdraw: (userData.totalWithdraw || 0) + amount
             });
         }
         
-        const withdrawRef = window.dbRef(window.db, `withdrawRequests/${withdrawKey}`);
-        await window.dbUpdate(withdrawRef, {
+        await window.dbUpdate(window.dbRef(window.db, `withdrawRequests/${withdrawKey}`), {
             status: 'approved',
             approvedAt: Date.now()
         });
         
-        alert('✅ Withdrawal approved! User balance deducted.');
+        alert('✅ Withdrawal approved!');
         loadAllData();
     } catch (error) {
-        console.error('Error approving withdrawal:', error);
-        alert('❌ Error! Try again.');
+        console.error('Error:', error);
+        alert('❌ Error!');
     }
 }
 
 async function rejectWithdraw(withdrawKey) {
     if (!confirm('Reject this withdrawal?')) return;
-    
     try {
-        const withdrawRef = window.dbRef(window.db, `withdrawRequests/${withdrawKey}`);
-        await window.dbUpdate(withdrawRef, {
+        await window.dbUpdate(window.dbRef(window.db, `withdrawRequests/${withdrawKey}`), {
             status: 'rejected'
         });
-        
         alert('Withdrawal rejected');
         loadAllData();
     } catch (error) {
-        console.error('Error rejecting withdrawal:', error);
+        console.error('Error:', error);
     }
 }
 
 async function deleteWithdraw(withdrawKey) {
     if (!confirm('Delete this withdrawal request?')) return;
-    
     try {
-        const withdrawRef = window.dbRef(window.db, `withdrawRequests/${withdrawKey}`);
-        await window.dbRemove(withdrawRef);
-        
-        alert('✅ Withdrawal deleted!');
+        await window.dbRemove(window.dbRef(window.db, `withdrawRequests/${withdrawKey}`));
+        alert('✅ Deleted!');
         loadAllData();
     } catch (error) {
-        console.error('Error deleting withdrawal:', error);
-        alert('❌ Error! Try again.');
+        console.error('Error:', error);
     }
 }
 
@@ -671,31 +638,28 @@ function editBalance(phone, name, balance) {
     currentEditUser = phone;
     document.getElementById('editUserName').textContent = name;
     document.getElementById('editUserPhone').textContent = phone;
-    document.getElementById('editCurrentBalance').textContent = balance.toFixed(2);
-    document.getElementById('editNewBalance').value = balance.toFixed(2);
+    document.getElementById('editCurrentBalance').textContent = balance.toFixed(0);
+    document.getElementById('editNewBalance').value = balance.toFixed(0);
     document.getElementById('editBalanceModal').classList.add('active');
 }
 
 async function saveBalance() {
     const newBalance = parseFloat(document.getElementById('editNewBalance').value);
-    
     if (isNaN(newBalance) || newBalance < 0) {
         alert('Invalid balance!');
         return;
     }
     
     try {
-        const userRef = window.dbRef(window.db, `users/${currentEditUser}`);
-        await window.dbUpdate(userRef, {
+        await window.dbUpdate(window.dbRef(window.db, `users/${currentEditUser}`), {
             balance: newBalance
         });
-        
         alert('✅ Balance updated!');
         closeModal();
         loadAllData();
     } catch (error) {
-        console.error('Error updating balance:', error);
-        alert('❌ Error! Try again.');
+        console.error('Error:', error);
+        alert('❌ Error!');
     }
 }
 
