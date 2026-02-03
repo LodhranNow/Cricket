@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin – Mines Game</title>
 
-<!-- Firebase Compat SDK -->
+<!-- Firebase Compat SDK — loaded in <head> so they are 100% ready before any script in <body> -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
@@ -13,7 +13,7 @@
 
 <style>
 /* ═══════════════════════════════════════════════
-   VARIABLES & RESET  (same palette as index)
+   VARIABLES & RESET
    ═══════════════════════════════════════════════ */
 :root {
   --gold:          #f0c040;
@@ -44,7 +44,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Canvas BG (same engine as index) ─── */
+/* ─── Canvas BG ─── */
 #bgCanvas {
   position:fixed; top:0; left:0;
   width:100%; height:100%;
@@ -129,6 +129,17 @@ body::before {
 .login-btn:hover { transform:translateY(-2px); box-shadow:0 0 26px rgba(52,211,153,.4); background:rgba(52,211,153,.28); }
 .login-btn:active { transform:translateY(0); }
 
+/* ── Firebase status pill (visible on login screen) ── */
+.fb-status {
+  margin-top:18px; font-size:13px; font-weight:600;
+  letter-spacing:1px; color:var(--text-muted);
+}
+.fb-status .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+.fb-status.connected .dot { background:var(--neon-emerald); box-shadow:0 0 6px rgba(52,211,153,.5); }
+.fb-status.connected { color:var(--neon-emerald); }
+.fb-status.failed .dot { background:var(--neon-rose); box-shadow:0 0 6px rgba(251,113,133,.5); }
+.fb-status.failed { color:var(--neon-rose); }
+
 /* ═══════════════════════════════════════════════
    DASHBOARD WRAPPER
    ═══════════════════════════════════════════════ */
@@ -187,7 +198,6 @@ body::before {
   padding:20px 16px; text-align:center;
   position:relative; overflow:hidden;
 }
-/* subtle coloured top-glow per card via --card-glow */
 .stat-card::before {
   content:'';
   position:absolute; top:0; left:10%; right:10%; height:2px;
@@ -253,7 +263,7 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════
-   CARDS (generic)
+   CARDS
    ═══════════════════════════════════════════════ */
 .card {
   background: rgba(14,18,32,0.72);
@@ -291,7 +301,7 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════
-   PLAYER CARDS (Players tab)
+   PLAYER CARDS
    ═══════════════════════════════════════════════ */
 .player-card {
   background: rgba(14,18,32,0.75);
@@ -427,7 +437,7 @@ body::before {
 .btn-kick:hover { box-shadow:0 0 20px rgba(167,139,250,.32); background:rgba(167,139,250,.24); }
 
 /* ═══════════════════════════════════════════════
-   DEPOSIT / WITHDRAW AMOUNT HIGHLIGHT
+   AMOUNT COLORS
    ═══════════════════════════════════════════════ */
 .amount-green { color:var(--neon-emerald); }
 .amount-rose  { color:var(--neon-rose); }
@@ -442,7 +452,7 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════════
-   MODAL (edit-balance)
+   MODAL
    ═══════════════════════════════════════════════ */
 .modal-overlay {
   display:none; position:fixed; inset:0;
@@ -495,7 +505,7 @@ body::before {
   box-shadow:0 0 14px rgba(34,211,238,.25);
 }
 .modal-btns { display:flex; gap:10px; margin-top:8px; }
-.modal-btns .btn-action { flex:1; text-align:center; justify-content:center; }
+.modal-btns .btn-action { flex:1; text-align:center; }
 
 /* ═══════════════════════════════════════════════
    RESPONSIVE
@@ -514,7 +524,7 @@ body::before {
 </head>
 <body>
 
-<!-- ═══ PARTICLE CANVAS (same as index) ═══ -->
+<!-- ═══ PARTICLE CANVAS ═══ -->
 <canvas id="bgCanvas"></canvas>
 
 <!-- ═══════════════════════════════════════════════
@@ -528,6 +538,9 @@ body::before {
            placeholder="Enter Password"
            onkeydown="if(event.key==='Enter') adminLogin()">
     <button class="login-btn" onclick="adminLogin()">Login</button>
+    <div id="fbStatus" class="fb-status">
+      <span class="dot"></span><span id="fbStatusText">Connecting…</span>
+    </div>
   </div>
 </div>
 
@@ -593,8 +606,7 @@ body::before {
     <div class="tab-heading">Withdrawal Requests</div>
     <div id="withdrawsContent"><div class="no-data">Loading…</div></div>
   </div>
-
-</div><!-- /dashboard -->
+</div>
 
 <!-- ═══ EDIT BALANCE MODAL ═══ -->
 <div id="editBalanceModal" class="modal-overlay">
@@ -621,7 +633,7 @@ body::before {
 </div>
 
 <!-- ═══════════════════════════════════════════════
-     PARTICLE ENGINE  (identical to index)
+     PARTICLE ENGINE
      ═══════════════════════════════════════════════ -->
 <script>
 (function(){
@@ -702,24 +714,58 @@ body::before {
 </script>
 
 <!-- ═══════════════════════════════════════════════
-     FIREBASE + ADMIN LOGIC
+     FIREBASE INIT  —  runs AFTER compat SDK is guaranteed loaded
      ═══════════════════════════════════════════════ -->
 <script>
-// ── Firebase init ──
-const firebaseConfig = {
-  apiKey:"AIzaSyA8C1-TpsRo0UsATshlI8Dy0v40PnLRlc4",
-  authDomain:"mines-67d8c.firebaseapp.com",
-  databaseURL:"https://mines-67d8c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"mines-67d8c",
-  storageBucket:"mines-67d8c.firebasestorage.app",
-  messagingSenderId:"918317634273",
-  appId:"1:918317634273:web:8527c0d58a1f3de0371da0",
-  measurementId:"G-NHC6K1X3KZ"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-console.log('✅ Firebase (compat) initialized!');
+// ── guard: only init once ──
+let db = null;
 
+function initFirebase(){
+  try {
+    if(!firebase.apps.length){
+      firebase.initializeApp({
+        apiKey:"AIzaSyA8C1-TpsRo0UsATshlI8Dy0v40PnLRlc4",
+        authDomain:"mines-67d8c.firebaseapp.com",
+        databaseURL:"https://mines-67d8c-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId:"mines-67d8c",
+        storageBucket:"mines-67d8c.firebasestorage.app",
+        messagingSenderId:"918317634273",
+        appId:"1:918317634273:web:8527c0d58a1f3de0371da0",
+        measurementId:"G-NHC6K1X3KZ"
+      });
+    }
+    db = firebase.database();
+
+    // ── connectivity test: write + read a tiny probe ──
+    db.ref('_ping').set(Date.now()).then(()=>{
+      setFbStatus(true);
+      console.log('✅ Firebase connected & writable');
+    }).catch(err=>{
+      setFbStatus(false);
+      console.error('❌ Firebase write failed:', err);
+    });
+
+  } catch(err){
+    setFbStatus(false);
+    console.error('❌ Firebase init error:', err);
+  }
+}
+
+function setFbStatus(ok){
+  const el   = document.getElementById('fbStatus');
+  const txt  = document.getElementById('fbStatusText');
+  el.className = 'fb-status ' + (ok ? 'connected' : 'failed');
+  txt.textContent = ok ? 'Firebase Connected ✓' : 'Firebase Failed ✗';
+}
+
+// run immediately — compat SDK scripts are in <head> so they are loaded by now
+initFirebase();
+</script>
+
+<!-- ═══════════════════════════════════════════════
+     ADMIN LOGIC
+     ═══════════════════════════════════════════════ -->
+<script>
 // ── Globals ──
 const ADMIN_PASSWORD = 'admin123';
 let currentEditUser  = null;
@@ -733,7 +779,6 @@ function adminLogin(){
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').classList.add('active');
     setupRealTimeListeners();
-    updateStats();
   } else {
     alert('❌ Wrong password!');
   }
@@ -744,237 +789,253 @@ function adminLogout(){ if(confirm('Logout?')) location.reload(); }
 //  REAL-TIME LISTENERS
 // ═══════════════════════════════════════════════
 function setupRealTimeListeners(){
-  db.ref('users').on('value', ()=>{
-    loadPlayers();
-    loadUsers();
-    updateStats();
+  if(!db){ alert('Firebase not connected!'); return; }
+
+  db.ref('users').on('value', function(snapshot){
+    renderPlayers(snapshot);
+    renderUsers(snapshot);
+    updateStatsFromSnapshots(snapshot);
   });
-  db.ref('depositRequests').on('value', ()=>{ loadDeposits(); updateStats(); });
-  db.ref('withdrawRequests').on('value', ()=>{ loadWithdraws(); updateStats(); });
+
+  db.ref('depositRequests').on('value', function(snapshot){
+    renderDeposits(snapshot);
+  });
+
+  db.ref('withdrawRequests').on('value', function(snapshot){
+    renderWithdraws(snapshot);
+  });
+
+  // also fetch deposit+withdraw snapshots for stats immediately
+  fetchAndUpdateStats();
 }
 
 // ═══════════════════════════════════════════════
 //  STATS
 // ═══════════════════════════════════════════════
-async function updateStats(){
+async function fetchAndUpdateStats(){
+  if(!db) return;
   try {
-    const usersSnap    = await db.ref('users').once('value');
-    const depSnap      = await db.ref('depositRequests').once('value');
-    const withdrawSnap = await db.ref('withdrawRequests').once('value');
+    const [usersSnap, depSnap, wdSnap] = await Promise.all([
+      db.ref('users').once('value'),
+      db.ref('depositRequests').once('value'),
+      db.ref('withdrawRequests').once('value')
+    ]);
+    calcStats(usersSnap, depSnap, wdSnap);
+  } catch(e){ console.error('fetchAndUpdateStats:', e); }
+}
 
-    let totalUsers=0, onlineUsers=0;
-    if(usersSnap.exists()){
-      const usersObj = usersSnap.val();
-      totalUsers = Object.keys(usersObj).length;
-      Object.values(usersObj).forEach(u=>{ if(u.isOnline) onlineUsers++; });
-    }
+function updateStatsFromSnapshots(usersSnap){
+  // called from users listener — re-fetch dep+wd for full stats
+  if(!db) return;
+  Promise.all([
+    db.ref('depositRequests').once('value'),
+    db.ref('withdrawRequests').once('value')
+  ]).then(([depSnap, wdSnap])=>{
+    calcStats(usersSnap, depSnap, wdSnap);
+  }).catch(e=> console.error('updateStats:', e));
+}
 
-    let totalDeposits=0;
-    if(depSnap.exists()){
-      depSnap.forEach(child=>{
-        const d=child.val();
-        if(d.status==='approved') totalDeposits+=(d.amount||0);
-      });
-    }
-
-    let totalWithdrawals=0;
-    if(withdrawSnap.exists()){
-      withdrawSnap.forEach(child=>{
-        const w=child.val();
-        if(w.status==='approved') totalWithdrawals+=(w.amount||0);
-      });
-    }
-
-    document.getElementById('totalUsers').textContent       = totalUsers;
-    document.getElementById('onlineUsers').textContent      = onlineUsers;
-    document.getElementById('totalDeposits').textContent    = totalDeposits.toFixed(0);
-    document.getElementById('totalWithdrawals').textContent = totalWithdrawals.toFixed(0);
-  } catch(e){ console.error('updateStats error:',e); }
+function calcStats(usersSnap, depSnap, wdSnap){
+  let totalUsers=0, onlineUsers=0;
+  if(usersSnap && usersSnap.exists()){
+    const obj = usersSnap.val();
+    totalUsers = Object.keys(obj).length;
+    Object.values(obj).forEach(u=>{ if(u.isOnline) onlineUsers++; });
+  }
+  let totalDep=0;
+  if(depSnap && depSnap.exists()){
+    depSnap.forEach(c=>{ const d=c.val(); if(d.status==='approved') totalDep+=(d.amount||0); });
+  }
+  let totalWd=0;
+  if(wdSnap && wdSnap.exists()){
+    wdSnap.forEach(c=>{ const w=c.val(); if(w.status==='approved') totalWd+=(w.amount||0); });
+  }
+  document.getElementById('totalUsers').textContent       = totalUsers;
+  document.getElementById('onlineUsers').textContent      = onlineUsers;
+  document.getElementById('totalDeposits').textContent    = totalDep;
+  document.getElementById('totalWithdrawals').textContent = totalWd;
 }
 
 // ═══════════════════════════════════════════════
-//  PLAYERS TAB – live balances
+//  PLAYERS TAB  —  receives snapshot directly from listener
 // ═══════════════════════════════════════════════
-async function loadPlayers(){
-  try {
-    const snap    = await db.ref('users').once('value');
-    const content = document.getElementById('playersContent');
-    if(!snap.exists()){ content.innerHTML='<div class="no-data">No players yet</div>'; return; }
+function renderPlayers(snapshot){
+  const content = document.getElementById('playersContent');
+  if(!snapshot.exists()){ content.innerHTML='<div class="no-data">No players yet</div>'; return; }
 
-    const users = snap.val();
-    let arr = Object.entries(users).map(([phone,data])=>({
-      phone, name:data.name||'Unknown', balance:data.balance||0, isOnline:!!data.isOnline
-    }));
-    arr.sort((a,b)=> b.balance - a.balance);
+  const users = snapshot.val();
+  let arr = Object.entries(users).map(function([phone, data]){
+    return { phone:phone, name:(data.name||'Unknown'), balance:(data.balance||0), isOnline:!!data.isOnline };
+  });
+  arr.sort(function(a,b){ return b.balance - a.balance; });
 
-    let html = '';
-    arr.forEach(u=>{
-      const initials = u.name.charAt(0).toUpperCase();
-      const badge    = u.isOnline
-        ? '<span class="badge badge-online">● Online</span>'
-        : '<span class="badge badge-offline">● Offline</span>';
-      html += `
-        <div class="player-card">
-          <div class="player-left">
-            <div class="player-avatar">${initials}</div>
-            <div>
-              <div class="player-name">${u.name} ${badge}</div>
-              <div class="player-phone">📱 ${u.phone}</div>
-            </div>
-          </div>
-          <div class="player-balance">Rs ${u.balance.toFixed(0)}</div>
-        </div>`;
-    });
-    content.innerHTML = html;
-  } catch(e){ console.error('loadPlayers:',e); }
+  let html = '';
+  arr.forEach(function(u){
+    var initials = u.name.charAt(0).toUpperCase();
+    var badge    = u.isOnline
+      ? '<span class="badge badge-online">● Online</span>'
+      : '<span class="badge badge-offline">● Offline</span>';
+    html +=
+      '<div class="player-card">' +
+        '<div class="player-left">' +
+          '<div class="player-avatar">' + initials + '</div>' +
+          '<div>' +
+            '<div class="player-name">' + u.name + ' ' + badge + '</div>' +
+            '<div class="player-phone">📱 ' + u.phone + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="player-balance">Rs ' + u.balance.toFixed(0) + '</div>' +
+      '</div>';
+  });
+  content.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════
-//  USERS TAB – full info + edit + kick
+//  USERS TAB
 // ═══════════════════════════════════════════════
-async function loadUsers(){
-  try {
-    const snap    = await db.ref('users').once('value');
-    const content = document.getElementById('usersContent');
-    if(!snap.exists()){ content.innerHTML='<div class="no-data">No users yet</div>'; return; }
+function renderUsers(snapshot){
+  const content = document.getElementById('usersContent');
+  if(!snapshot.exists()){ content.innerHTML='<div class="no-data">No users yet</div>'; return; }
 
-    const users = snap.val();
-    let html = '';
-    Object.entries(users).forEach(([phone, u])=>{
-      const badge = u.isOnline
-        ? '<span class="badge badge-online">● Online</span>'
-        : '<span class="badge badge-offline">● Offline</span>';
+  const users = snapshot.val();
+  let html = '';
 
-      const devInfo = u.deviceId
-        ? `<div class="card-info">📱 Device: ${u.deviceId.substring(0,20)}…</div>`
-        : '<div class="card-info">📱 Device: N/A</div>';
+  Object.keys(users).forEach(function(phone){
+    var u = users[phone];
+    var safeName = (u.name || 'Unknown').replace(/'/g, "\\'");
 
-      const loginInfo = u.lastLogin
-        ? `<div class="card-info">🕒 Last Login: ${new Date(u.lastLogin).toLocaleString()}</div>`
-        : '';
+    var badge = u.isOnline
+      ? '<span class="badge badge-online">● Online</span>'
+      : '<span class="badge badge-offline">● Offline</span>';
 
-      const kickBtn = u.isOnline
-        ? `<button class="btn-action btn-kick" onclick="kickUser('${phone}')">⚡ Kick</button>`
-        : '';
+    var devInfo = u.deviceId
+      ? '<div class="card-info">📱 Device: ' + u.deviceId.substring(0,20) + '…</div>'
+      : '<div class="card-info">📱 Device: N/A</div>';
 
-      html += `
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">${u.name||'Unknown'} ${badge}</div>
-              <div class="card-info">📱 ${phone}</div>
-              ${devInfo}
-              ${loginInfo}
-            </div>
-            <div class="btn-row">
-              <button class="btn-action btn-edit" onclick="editBalance('${phone}','${(u.name||'').replace(/'/g,"\\'")}'  ,${u.balance||0})">✏️ Edit</button>
-              ${kickBtn}
-            </div>
-          </div>
-          <div class="card-amount">Rs ${(u.balance||0).toFixed(0)}</div>
-          <div class="card-info">
-            💰 Deposited: Rs ${(u.totalDeposit||0).toFixed(0)} &nbsp;|&nbsp;
-            💸 Withdrawn: Rs ${(u.totalWithdraw||0).toFixed(0)}
-          </div>
-        </div>`;
-    });
-    content.innerHTML = html;
-  } catch(e){ console.error('loadUsers:',e); }
+    var loginInfo = u.lastLogin
+      ? '<div class="card-info">🕒 Last Login: ' + new Date(u.lastLogin).toLocaleString() + '</div>'
+      : '';
+
+    var kickBtn = u.isOnline
+      ? '<button class="btn-action btn-kick" onclick="kickUser(\'' + phone + '\')">⚡ Kick</button>'
+      : '';
+
+    html +=
+      '<div class="card">' +
+        '<div class="card-header">' +
+          '<div>' +
+            '<div class="card-title">' + (u.name||'Unknown') + ' ' + badge + '</div>' +
+            '<div class="card-info">📱 ' + phone + '</div>' +
+            devInfo + loginInfo +
+          '</div>' +
+          '<div class="btn-row">' +
+            '<button class="btn-action btn-edit" onclick="editBalance(\'' + phone + '\',\'' + safeName + '\',' + (u.balance||0) + ')">✏️ Edit</button>' +
+            kickBtn +
+          '</div>' +
+        '</div>' +
+        '<div class="card-amount">Rs ' + (u.balance||0).toFixed(0) + '</div>' +
+        '<div class="card-info">' +
+          '💰 Deposited: Rs ' + (u.totalDeposit||0).toFixed(0) + ' &nbsp;|&nbsp; ' +
+          '💸 Withdrawn: Rs ' + (u.totalWithdraw||0).toFixed(0) +
+        '</div>' +
+      '</div>';
+  });
+  content.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════
 //  KICK USER
 // ═══════════════════════════════════════════════
 async function kickUser(phone){
-  if(!confirm(`Kick user ${phone} off all devices?`)) return;
+  if(!confirm('Kick user ' + phone + ' off all devices?')) return;
   try {
-    await db.ref(`users/${phone}`).update({ isOnline:false, deviceId:null, kickedAt:Date.now() });
+    await db.ref('users/' + phone).update({ isOnline:false, deviceId:null, kickedAt:Date.now() });
     alert('✅ User kicked!');
-  } catch(e){ console.error(e); alert('❌ Error!'); }
+  } catch(e){ console.error(e); alert('❌ Error kicking user: ' + e.message); }
 }
 
 // ═══════════════════════════════════════════════
 //  DEPOSITS TAB
 // ═══════════════════════════════════════════════
-async function loadDeposits(){
-  try {
-    const snap    = await db.ref('depositRequests').once('value');
-    const content = document.getElementById('depositsContent');
-    if(!snap.exists()){ content.innerHTML='<div class="no-data">No deposit requests yet</div>'; return; }
+function renderDeposits(snapshot){
+  const content = document.getElementById('depositsContent');
+  if(!snapshot.exists()){ content.innerHTML='<div class="no-data">No deposit requests yet</div>'; return; }
 
-    let arr = [];
-    snap.forEach(child=>{ arr.push({ firebaseKey:child.key, ...child.val() }); });
-    arr.sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
+  var arr = [];
+  snapshot.forEach(function(child){ arr.push({ firebaseKey:child.key, ...child.val() }); });
+  arr.sort(function(a,b){ return (b.timestamp||0) - (a.timestamp||0); });
 
-    let html = '';
-    arr.forEach(d=>{
-      const date   = d.timestamp ? new Date(d.timestamp).toLocaleString() : 'N/A';
-      const badge  = d.status==='pending'  ? 'badge-pending'
-                   : d.status==='approved' ? 'badge-approved' : 'badge-rejected';
-      const btns   = d.status==='pending'
-        ? `<button class="btn-action btn-approve" onclick="approveDeposit('${d.firebaseKey}','${d.phone}',${d.amount})">✓ Approve</button>
-           <button class="btn-action btn-reject"  onclick="rejectDeposit('${d.firebaseKey}')">✗ Reject</button>`
-        : `<button class="btn-action btn-delete"  onclick="deleteDeposit('${d.firebaseKey}')">🗑 Delete</button>`;
+  var html = '';
+  arr.forEach(function(d){
+    var date  = d.timestamp ? new Date(d.timestamp).toLocaleString() : 'N/A';
+    var badge = d.status==='pending'  ? 'badge-pending'
+              : d.status==='approved' ? 'badge-approved' : 'badge-rejected';
+    var btns  = d.status==='pending'
+      ? '<button class="btn-action btn-approve" onclick="approveDeposit(\'' + d.firebaseKey + '\',\'' + d.phone + '\',' + d.amount + ')">✓ Approve</button>' +
+        '<button class="btn-action btn-reject"  onclick="rejectDeposit(\'' + d.firebaseKey + '\')">✗ Reject</button>'
+      : '<button class="btn-action btn-delete"  onclick="deleteDeposit(\'' + d.firebaseKey + '\')">🗑 Delete</button>';
 
-      html += `
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">${d.name||'Unknown'}</div>
-              <div class="card-info">📱 ${d.phone}</div>
-              <div class="card-info">🕒 ${date}</div>
-            </div>
-            <span class="badge ${badge}">${(d.status||'pending').toUpperCase()}</span>
-          </div>
-          <div class="card-amount amount-green">+ Rs ${d.amount}</div>
-          <div class="btn-row">${btns}</div>
-        </div>`;
-    });
-    content.innerHTML = html;
-  } catch(e){ console.error('loadDeposits:',e); }
+    html +=
+      '<div class="card">' +
+        '<div class="card-header">' +
+          '<div>' +
+            '<div class="card-title">' + (d.name||'Unknown') + '</div>' +
+            '<div class="card-info">📱 ' + d.phone + '</div>' +
+            '<div class="card-info">🕒 ' + date + '</div>' +
+          '</div>' +
+          '<span class="badge ' + badge + '">' + (d.status||'pending').toUpperCase() + '</span>' +
+        '</div>' +
+        '<div class="card-amount amount-green">+ Rs ' + d.amount + '</div>' +
+        '<div class="btn-row">' + btns + '</div>' +
+      '</div>';
+  });
+  content.innerHTML = html;
+
+  // refresh stats after deposit list changes
+  fetchAndUpdateStats();
 }
 
 // ═══════════════════════════════════════════════
 //  WITHDRAWALS TAB
 // ═══════════════════════════════════════════════
-async function loadWithdraws(){
-  try {
-    const snap    = await db.ref('withdrawRequests').once('value');
-    const content = document.getElementById('withdrawsContent');
-    if(!snap.exists()){ content.innerHTML='<div class="no-data">No withdrawal requests yet</div>'; return; }
+function renderWithdraws(snapshot){
+  const content = document.getElementById('withdrawsContent');
+  if(!snapshot.exists()){ content.innerHTML='<div class="no-data">No withdrawal requests yet</div>'; return; }
 
-    let arr = [];
-    snap.forEach(child=>{ arr.push({ firebaseKey:child.key, ...child.val() }); });
-    arr.sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
+  var arr = [];
+  snapshot.forEach(function(child){ arr.push({ firebaseKey:child.key, ...child.val() }); });
+  arr.sort(function(a,b){ return (b.timestamp||0) - (a.timestamp||0); });
 
-    let html = '';
-    arr.forEach(w=>{
-      const date   = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
-      const badge  = w.status==='pending'  ? 'badge-pending'
-                   : w.status==='approved' ? 'badge-approved' : 'badge-rejected';
-      const method = w.withdrawMethod==='easy' ? 'Easypaisa' : 'JazzCash';
-      const btns   = w.status==='pending'
-        ? `<button class="btn-action btn-approve" onclick="approveWithdraw('${w.firebaseKey}','${w.phone}',${w.amount})">✓ Approve</button>
-           <button class="btn-action btn-reject"  onclick="rejectWithdraw('${w.firebaseKey}')">✗ Reject</button>`
-        : `<button class="btn-action btn-delete"  onclick="deleteWithdraw('${w.firebaseKey}')">🗑 Delete</button>`;
+  var html = '';
+  arr.forEach(function(w){
+    var date   = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
+    var badge  = w.status==='pending'  ? 'badge-pending'
+               : w.status==='approved' ? 'badge-approved' : 'badge-rejected';
+    var method = w.withdrawMethod==='easy' ? 'Easypaisa' : 'JazzCash';
+    var btns   = w.status==='pending'
+      ? '<button class="btn-action btn-approve" onclick="approveWithdraw(\'' + w.firebaseKey + '\',\'' + w.phone + '\',' + w.amount + ')">✓ Approve</button>' +
+        '<button class="btn-action btn-reject"  onclick="rejectWithdraw(\'' + w.firebaseKey + '\')">✗ Reject</button>'
+      : '<button class="btn-action btn-delete"  onclick="deleteWithdraw(\'' + w.firebaseKey + '\')">🗑 Delete</button>';
 
-      html += `
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">${w.name||'Unknown'}</div>
-              <div class="card-info">📱 ${w.phone}</div>
-              <div class="card-info">💳 ${method}: ${w.jazzCash}</div>
-              <div class="card-info">🕒 ${date}</div>
-            </div>
-            <span class="badge ${badge}">${(w.status||'pending').toUpperCase()}</span>
-          </div>
-          <div class="card-amount amount-rose">− Rs ${w.amount}</div>
-          <div class="btn-row">${btns}</div>
-        </div>`;
-    });
-    content.innerHTML = html;
-  } catch(e){ console.error('loadWithdraws:',e); }
+    html +=
+      '<div class="card">' +
+        '<div class="card-header">' +
+          '<div>' +
+            '<div class="card-title">' + (w.name||'Unknown') + '</div>' +
+            '<div class="card-info">📱 ' + w.phone + '</div>' +
+            '<div class="card-info">💳 ' + method + ': ' + w.jazzCash + '</div>' +
+            '<div class="card-info">🕒 ' + date + '</div>' +
+          '</div>' +
+          '<span class="badge ' + badge + '">' + (w.status||'pending').toUpperCase() + '</span>' +
+        '</div>' +
+        '<div class="card-amount amount-rose">− Rs ' + w.amount + '</div>' +
+        '<div class="btn-row">' + btns + '</div>' +
+      '</div>';
+  });
+  content.innerHTML = html;
+
+  // refresh stats
+  fetchAndUpdateStats();
 }
 
 // ═══════════════════════════════════════════════
@@ -983,27 +1044,33 @@ async function loadWithdraws(){
 async function approveDeposit(key, phone, amount){
   if(!confirm('Approve this deposit? Balance will be credited.')) return;
   try {
-    const snap = await db.ref(`users/${phone}`).once('value');
+    var snap = await db.ref('users/' + phone).once('value');
     if(snap.exists()){
-      const u = snap.val();
-      await db.ref(`users/${phone}`).update({
+      var u = snap.val();
+      await db.ref('users/' + phone).update({
         balance:      (u.balance||0) + amount,
         totalDeposit: (u.totalDeposit||0) + amount
       });
     }
-    await db.ref(`depositRequests/${key}`).update({ status:'approved', approvedAt:Date.now() });
+    await db.ref('depositRequests/' + key).update({ status:'approved', approvedAt:Date.now() });
     alert('✅ Deposit approved!');
-  } catch(e){ console.error(e); alert('❌ Error!'); }
+  } catch(e){ console.error(e); alert('❌ Error: ' + e.message); }
 }
+
 async function rejectDeposit(key){
   if(!confirm('Reject this deposit?')) return;
-  try { await db.ref(`depositRequests/${key}`).update({ status:'rejected' }); alert('Deposit rejected'); }
-  catch(e){ console.error(e); }
+  try {
+    await db.ref('depositRequests/' + key).update({ status:'rejected' });
+    alert('Deposit rejected');
+  } catch(e){ console.error(e); alert('❌ Error: ' + e.message); }
 }
+
 async function deleteDeposit(key){
   if(!confirm('Delete this deposit request?')) return;
-  try { await db.ref(`depositRequests/${key}`).remove(); alert('✅ Deleted!'); }
-  catch(e){ console.error(e); }
+  try {
+    await db.ref('depositRequests/' + key).remove();
+    alert('✅ Deleted!');
+  } catch(e){ console.error(e); alert('❌ Error: ' + e.message); }
 }
 
 // ═══════════════════════════════════════════════
@@ -1013,27 +1080,33 @@ async function approveWithdraw(key, phone, amount){
   if(!confirm('Step 1: Have you sent the money to the user?')) return;
   if(!confirm('Step 2: Confirm approval?')) return;
   try {
-    const snap = await db.ref(`users/${phone}`).once('value');
+    var snap = await db.ref('users/' + phone).once('value');
     if(snap.exists()){
-      const u = snap.val();
-      await db.ref(`users/${phone}`).update({
+      var u = snap.val();
+      await db.ref('users/' + phone).update({
         balance:       Math.max(0, (u.balance||0) - amount),
         totalWithdraw: (u.totalWithdraw||0) + amount
       });
     }
-    await db.ref(`withdrawRequests/${key}`).update({ status:'approved', approvedAt:Date.now() });
+    await db.ref('withdrawRequests/' + key).update({ status:'approved', approvedAt:Date.now() });
     alert('✅ Withdrawal approved!');
-  } catch(e){ console.error(e); alert('❌ Error!'); }
+  } catch(e){ console.error(e); alert('❌ Error: ' + e.message); }
 }
+
 async function rejectWithdraw(key){
   if(!confirm('Reject this withdrawal?')) return;
-  try { await db.ref(`withdrawRequests/${key}`).update({ status:'rejected' }); alert('Withdrawal rejected'); }
-  catch(e){ console.error(e); }
+  try {
+    await db.ref('withdrawRequests/' + key).update({ status:'rejected' });
+    alert('Withdrawal rejected');
+  } catch(e){ console.error(e); alert('❌ Error: ' + e.message); }
 }
+
 async function deleteWithdraw(key){
   if(!confirm('Delete this withdrawal request?')) return;
-  try { await db.ref(`withdrawRequests/${key}`).remove(); alert('✅ Deleted!'); }
-  catch(e){ console.error(e); }
+  try {
+    await db.ref('withdrawRequests/' + key).remove();
+    alert('✅ Deleted!');
+  } catch(e){ console.error(e); alert('❌ Error: ' + e.message); }
 }
 
 // ═══════════════════════════════════════════════
@@ -1047,23 +1120,27 @@ function editBalance(phone, name, balance){
   document.getElementById('editNewBalance').value           = Number(balance).toFixed(0);
   document.getElementById('editBalanceModal').classList.add('active');
 }
+
 async function saveBalance(){
-  const val = parseFloat(document.getElementById('editNewBalance').value);
+  var val = parseFloat(document.getElementById('editNewBalance').value);
   if(isNaN(val) || val < 0){ alert('Invalid balance!'); return; }
   try {
-    await db.ref(`users/${currentEditUser}`).update({ balance: val });
+    await db.ref('users/' + currentEditUser).update({ balance: val });
     alert('✅ Balance updated!');
     closeModal();
-  } catch(e){ console.error(e); alert('❌ Error!'); }
+  } catch(e){ console.error(e); alert('❌ Error: ' + e.message); }
 }
-function closeModal(){ document.getElementById('editBalanceModal').classList.remove('active'); }
+
+function closeModal(){
+  document.getElementById('editBalanceModal').classList.remove('active');
+}
 
 // ═══════════════════════════════════════════════
 //  TAB SWITCHING
 // ═══════════════════════════════════════════════
 function showTab(tabName, btn){
-  document.querySelectorAll('.tab').forEach(t=> t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c=> c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
   btn.classList.add('active');
   document.getElementById(tabName).classList.add('active');
 }
