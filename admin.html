@@ -736,13 +736,13 @@ function initFirebase(){
     }
     db = firebase.database();
 
-    // ── connectivity test: write + read a tiny probe ──
-    db.ref('_ping').set(Date.now()).then(()=>{
+    // ── connectivity test: read users (lightweight, no write needed) ──
+    db.ref('users').once('value').then(()=>{
       setFbStatus(true);
-      console.log('✅ Firebase connected & writable');
+      console.log('✅ Firebase connected');
     }).catch(err=>{
       setFbStatus(false);
-      console.error('❌ Firebase write failed:', err);
+      console.error('❌ Firebase connection failed:', err);
     });
 
   } catch(err){
@@ -767,7 +767,7 @@ initFirebase();
      ═══════════════════════════════════════════════ -->
 <script>
 // ── Globals ──
-const ADMIN_PASSWORD = '@/Aa362014300';
+const ADMIN_PASSWORD = 'admin123';
 let currentEditUser  = null;
 
 // ═══════════════════════════════════════════════
