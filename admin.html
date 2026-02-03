@@ -1,282 +1,721 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Mines Game</title>
+<title>Admin – Mines Game</title>
 
-<!-- Firebase Compat SDK (loads synchronously, no module timing issues) -->
+<!-- Firebase Compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    font-family: Arial;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    min-height: 100vh;
-    padding: 10px;
+/* ═══════════════════════════════════════════════
+   VARIABLES & RESET  (same palette as index)
+   ═══════════════════════════════════════════════ */
+:root {
+  --gold:          #f0c040;
+  --neon-cyan:     #22d3ee;
+  --neon-emerald:  #34d399;
+  --neon-amber:    #fbbf24;
+  --neon-rose:     #fb7185;
+  --neon-blue:     #60a5fa;
+  --neon-purple:   #a78bfa;
+  --bg-deep:       #0a0c14;
+  --glass-bg:      rgba(18, 22, 40, 0.72);
+  --glass-border:  rgba(255,255,255,0.11);
+  --glass-border2: rgba(255,255,255,0.20);
+  --text-primary:  #f0f0f5;
+  --text-muted:    #9aa0b8;
+  --radius:        16px;
+  --radius-sm:     10px;
+  --blur-main:     22px;
 }
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  min-height:100vh;
+  font-family:'Rajdhani', sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Canvas BG (same engine as index) ─── */
+#bgCanvas {
+  position:fixed; top:0; left:0;
+  width:100%; height:100%;
+  z-index:0; pointer-events:none;
+}
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:1;
+  pointer-events:none; opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════ */
+::-webkit-scrollbar       { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,.14); border-radius:3px; }
+
+/* ═══════════════════════════════════════════════
+   LOGIN SCREEN
+   ═══════════════════════════════════════════════ */
 .login-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+  position:relative; z-index:2;
+  display:flex; justify-content:center; align-items:center;
+  min-height:100vh; padding:20px;
 }
 .login-box {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    max-width: 400px;
-    width: 100%;
+  background: rgba(18,22,40,0.78);
+  backdrop-filter: blur(var(--blur-main)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--blur-main)) saturate(1.4);
+  border: 1.5px solid var(--glass-border2);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.07);
+  padding:44px 36px 40px;
+  max-width:380px; width:100%;
+  text-align:center;
 }
-.login-title { font-size: 32px; font-weight: bold; text-align: center; margin-bottom: 30px; }
+.login-title {
+  font-family:'Orbitron', sans-serif;
+  font-size:28px; font-weight:900;
+  letter-spacing:6px;
+  background: linear-gradient(135deg, #f0c040, #fbbf24, #f59e0b);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter: drop-shadow(0 0 16px rgba(240,192,64,.4));
+  margin-bottom:6px;
+}
+.login-sub {
+  font-size:13px; color:var(--text-muted);
+  letter-spacing:2px; margin-bottom:28px;
+}
 .login-input {
-    width: 100%;
-    padding: 15px;
-    margin: 15px 0;
-    border: 2px solid #ddd;
-    border-radius: 10px;
-    font-size: 16px;
+  width:100%; padding:14px 18px; margin:10px 0;
+  background: rgba(12,15,26,0.78);
+  border: 1.5px solid var(--glass-border2);
+  border-radius: var(--radius-sm);
+  font-family:'Rajdhani', sans-serif;
+  font-size:17px; font-weight:500;
+  color: var(--text-primary); outline:none;
+  transition: border-color .25s, box-shadow .25s;
+}
+.login-input::placeholder { color:var(--text-muted); }
+.login-input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 14px rgba(34,211,238,.25);
 }
 .login-btn {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
+  width:100%; padding:15px; margin-top:14px;
+  background: rgba(52,211,153,.18);
+  border: 1.5px solid rgba(52,211,153,.55);
+  border-radius: var(--radius-sm);
+  font-family:'Rajdhani', sans-serif;
+  font-size:18px; font-weight:700;
+  letter-spacing:2px; color: var(--neon-emerald);
+  cursor:pointer; text-transform:uppercase;
+  box-shadow: 0 0 14px rgba(52,211,153,.18);
+  transition: transform .18s, box-shadow .25s, background .22s;
 }
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 20px;
-    padding: 20px;
-    display: none;
+.login-btn:hover { transform:translateY(-2px); box-shadow:0 0 26px rgba(52,211,153,.4); background:rgba(52,211,153,.28); }
+.login-btn:active { transform:translateY(0); }
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD WRAPPER
+   ═══════════════════════════════════════════════ */
+.dashboard {
+  position:relative; z-index:2;
+  display:none;
+  max-width:1120px; margin:0 auto;
+  padding:22px 18px 48px;
 }
-.container.active { display: block; }
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 10px;
+.dashboard.active { display:block; }
+
+/* ─── Header ─── */
+.dash-header {
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:12px;
+  margin-bottom:22px;
 }
-h1 { color: #1e3c72; font-size: 28px; }
-.logout-btn {
-    background: #DC143C;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
+.dash-title {
+  font-family:'Orbitron', sans-serif;
+  font-size:24px; font-weight:900;
+  letter-spacing:5px;
+  background: linear-gradient(135deg, #f0c040, #fbbf24);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter: drop-shadow(0 0 12px rgba(240,192,64,.35));
 }
-.stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
+.dash-logout {
+  padding:10px 22px; border-radius: var(--radius-sm);
+  background: rgba(251,113,133,.15);
+  border: 1.5px solid rgba(251,113,133,.5);
+  color: var(--neon-rose);
+  font-family:'Rajdhani', sans-serif;
+  font-size:15px; font-weight:700;
+  letter-spacing:1px; cursor:pointer;
+  text-transform:uppercase;
+  transition: background .2s, box-shadow .2s;
+}
+.dash-logout:hover { background:rgba(251,113,133,.26); box-shadow:0 0 18px rgba(251,113,133,.3); }
+
+/* ═══════════════════════════════════════════════
+   STAT CARDS ROW
+   ═══════════════════════════════════════════════ */
+.stats-row {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap:14px; margin-bottom:22px;
 }
 .stat-card {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
+  background: rgba(18,22,40,0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid var(--glass-border2);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 28px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+  padding:20px 16px; text-align:center;
+  position:relative; overflow:hidden;
 }
-.stat-value { font-size: 36px; font-weight: bold; margin: 10px 0; }
-.stat-label { font-size: 14px; }
+/* subtle coloured top-glow per card via --card-glow */
+.stat-card::before {
+  content:'';
+  position:absolute; top:0; left:10%; right:10%; height:2px;
+  background: var(--card-glow, var(--neon-cyan));
+  filter: blur(3px);
+  opacity:.7;
+}
+.stat-card[data-color="cyan"]   { --card-glow: var(--neon-cyan); }
+.stat-card[data-color="emerald"]{ --card-glow: var(--neon-emerald); }
+.stat-card[data-color="amber"]  { --card-glow: var(--neon-amber); }
+.stat-card[data-color="purple"] { --card-glow: var(--neon-purple); }
+
+.stat-label {
+  font-size:11px; color:var(--text-muted);
+  letter-spacing:2.2px; text-transform:uppercase; margin-bottom:8px;
+}
+.stat-value {
+  font-family:'Orbitron', sans-serif;
+  font-size:28px; font-weight:700;
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(240,192,64,.4);
+}
+
+/* ═══════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════ */
 .tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+  display:flex; gap:8px; margin-bottom:18px;
+  flex-wrap:wrap;
 }
 .tab {
-    padding: 12px 24px;
-    background: #1e3c72;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
+  padding:11px 22px; border-radius: var(--radius-sm);
+  background: rgba(18,22,40,0.65);
+  border: 1.5px solid var(--glass-border);
+  color: var(--text-muted);
+  font-family:'Rajdhani', sans-serif;
+  font-size:15px; font-weight:600;
+  letter-spacing:1px; cursor:pointer;
+  text-transform:uppercase;
+  transition: background .22s, border-color .22s, color .22s, box-shadow .25s;
 }
-.tab.active { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.tab:hover { border-color: rgba(255,255,255,.25); color:var(--text-primary); }
+.tab.active {
+  background: rgba(240,192,64,.15);
+  border-color: rgba(240,192,64,.55);
+  color: var(--gold);
+  box-shadow: 0 0 16px rgba(240,192,64,.22);
+}
+
+/* ═══════════════════════════════════════════════
+   TAB CONTENT PANELS
+   ═══════════════════════════════════════════════ */
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+.tab-heading {
+  font-family:'Orbitron', sans-serif;
+  font-size:14px; font-weight:600;
+  letter-spacing:3px; color:var(--text-muted);
+  text-transform:uppercase;
+  margin-bottom:14px; padding-bottom:10px;
+  border-bottom:1px solid var(--glass-border);
+}
+
+/* ═══════════════════════════════════════════════
+   CARDS (generic)
+   ═══════════════════════════════════════════════ */
 .card {
-    background: white;
-    border: 2px solid #eee;
-    border-radius: 10px;
-    padding: 15px;
-    margin: 10px 0;
+  background: rgba(14,18,32,0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 20px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05);
+  padding:18px 18px 16px;
+  margin-bottom:12px;
+  transition: border-color .22s;
 }
+.card:hover { border-color: var(--glass-border2); }
+
 .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 10px;
+  display:flex; justify-content:space-between;
+  align-items:flex-start; flex-wrap:wrap; gap:10px;
+  margin-bottom:10px;
 }
-.card-title { font-weight: bold; font-size: 16px; }
-.card-info { color: #666; font-size: 14px; margin: 5px 0; }
-.card-amount { font-size: 24px; font-weight: bold; color: #4CAF50; margin: 10px 0; }
-button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    margin: 2px;
+.card-title {
+  font-family:'Orbitron', sans-serif;
+  font-size:14px; font-weight:700;
+  color:var(--text-primary); letter-spacing:1px;
 }
-.btn-approve { background: #4CAF50; color: white; }
-.btn-reject  { background: #f44336; color: white; }
-.btn-delete  { background: #FF9800; color: white; }
-.btn-edit    { background: #2196F3; color: white; }
-.btn-kick    { background: #9C27B0; color: white; }
-.status-pending  { color: #FF9800; background: rgba(255,152,0,0.15);  padding: 5px 10px; border-radius: 5px; font-size: 12px; }
-.status-approved { color: #4CAF50; background: rgba(76,175,80,0.15);  padding: 5px 10px; border-radius: 5px; font-size: 12px; }
-.status-rejected { color: #f44336; background: rgba(244,67,54,0.15);  padding: 5px 10px; border-radius: 5px; font-size: 12px; }
-.status-online   { color: #4CAF50; background: rgba(76,175,80,0.15);  padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; }
-.status-offline  { color: #999;    background: rgba(150,150,150,0.15); padding: 4px 10px; border-radius: 5px; font-size: 12px; }
-.modal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+.card-info {
+  font-size:14px; color:var(--text-muted);
+  margin:4px 0; line-height:1.5;
 }
-.modal.active { display: flex; }
-.modal-content {
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
+.card-amount {
+  font-family:'Orbitron', sans-serif;
+  font-size:22px; font-weight:700;
+  color:var(--gold);
+  text-shadow: 0 0 8px rgba(240,192,64,.35);
+  margin:8px 0;
 }
-.modal-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
-.modal-input {
-    width: 100%;
-    padding: 12px;
-    margin: 12px 0;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-}
-.no-data { text-align: center; padding: 40px; color: #999; font-size: 16px; }
+
+/* ═══════════════════════════════════════════════
+   PLAYER CARDS (Players tab)
+   ═══════════════════════════════════════════════ */
 .player-card {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  background: rgba(14,18,32,0.75);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 20px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05);
+  padding:16px 18px;
+  margin-bottom:10px;
+  display:flex; justify-content:space-between; align-items:center;
+  gap:12px;
+  transition: border-color .22s;
 }
-.player-name    { font-size: 18px; font-weight: bold; }
-.player-phone   { font-size: 14px; opacity: 0.9; }
-.player-balance { font-size: 24px; font-weight: bold; }
+.player-card:hover { border-color: rgba(240,192,64,.3); }
+
+.player-left { display:flex; align-items:center; gap:14px; }
+.player-avatar {
+  width:42px; height:42px; border-radius:50%;
+  background: rgba(240,192,64,.15);
+  border: 1.5px solid rgba(240,192,64,.4);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Orbitron', sans-serif;
+  font-size:16px; font-weight:700;
+  color:var(--gold);
+  flex-shrink:0;
+}
+.player-name {
+  font-family:'Orbitron', sans-serif;
+  font-size:14px; font-weight:700;
+  color:var(--text-primary); letter-spacing:.8px;
+  margin-bottom:3px;
+}
+.player-phone { font-size:13px; color:var(--text-muted); }
+
+.player-balance {
+  font-family:'Orbitron', sans-serif;
+  font-size:20px; font-weight:700;
+  color:var(--gold);
+  text-shadow: 0 0 8px rgba(240,192,64,.35);
+  white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   STATUS BADGES
+   ═══════════════════════════════════════════════ */
+.badge {
+  display:inline-block;
+  font-size:11px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase;
+  padding:4px 10px; border-radius:20px;
+}
+.badge-online {
+  color: var(--neon-emerald);
+  background: rgba(52,211,153,.14);
+  border: 1px solid rgba(52,211,153,.4);
+  box-shadow: 0 0 6px rgba(52,211,153,.18);
+}
+.badge-offline {
+  color: var(--text-muted);
+  background: rgba(150,150,150,.1);
+  border: 1px solid rgba(150,150,150,.2);
+}
+.badge-pending {
+  color: var(--neon-amber);
+  background: rgba(251,191,36,.12);
+  border: 1px solid rgba(251,191,36,.4);
+  box-shadow: 0 0 6px rgba(251,191,36,.15);
+}
+.badge-approved {
+  color: var(--neon-emerald);
+  background: rgba(52,211,153,.14);
+  border: 1px solid rgba(52,211,153,.4);
+}
+.badge-rejected {
+  color: var(--neon-rose);
+  background: rgba(251,113,133,.14);
+  border: 1px solid rgba(251,113,133,.4);
+}
+
+/* ═══════════════════════════════════════════════
+   ACTION BUTTONS
+   ═══════════════════════════════════════════════ */
+.btn-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.btn-action {
+  padding:9px 18px; border-radius: var(--radius-sm);
+  font-family:'Rajdhani', sans-serif;
+  font-size:14px; font-weight:700;
+  letter-spacing:1px; cursor:pointer;
+  border:1.5px solid; text-transform:uppercase;
+  transition: transform .18s, box-shadow .25s, background .22s;
+}
+.btn-action:hover { transform:translateY(-1px); }
+.btn-action:active { transform:translateY(0); }
+
+.btn-approve {
+  color:var(--neon-emerald);
+  background:rgba(52,211,153,.16);
+  border-color:rgba(52,211,153,.5);
+  box-shadow:0 0 10px rgba(52,211,153,.15);
+}
+.btn-approve:hover { box-shadow:0 0 20px rgba(52,211,153,.35); background:rgba(52,211,153,.24); }
+
+.btn-reject {
+  color:var(--neon-rose);
+  background:rgba(251,113,133,.15);
+  border-color:rgba(251,113,133,.5);
+  box-shadow:0 0 10px rgba(251,113,133,.15);
+}
+.btn-reject:hover { box-shadow:0 0 20px rgba(251,113,133,.35); background:rgba(251,113,133,.24); }
+
+.btn-delete {
+  color:var(--neon-amber);
+  background:rgba(251,191,36,.13);
+  border-color:rgba(251,191,36,.45);
+  box-shadow:0 0 10px rgba(251,191,36,.13);
+}
+.btn-delete:hover { box-shadow:0 0 20px rgba(251,191,36,.3); background:rgba(251,191,36,.22); }
+
+.btn-edit {
+  color:var(--neon-blue);
+  background:rgba(96,165,250,.15);
+  border-color:rgba(96,165,250,.48);
+  box-shadow:0 0 10px rgba(96,165,250,.13);
+}
+.btn-edit:hover { box-shadow:0 0 20px rgba(96,165,250,.32); background:rgba(96,165,250,.24); }
+
+.btn-kick {
+  color:var(--neon-purple);
+  background:rgba(167,139,250,.14);
+  border-color:rgba(167,139,250,.48);
+  box-shadow:0 0 10px rgba(167,139,250,.13);
+}
+.btn-kick:hover { box-shadow:0 0 20px rgba(167,139,250,.32); background:rgba(167,139,250,.24); }
+
+/* ═══════════════════════════════════════════════
+   DEPOSIT / WITHDRAW AMOUNT HIGHLIGHT
+   ═══════════════════════════════════════════════ */
+.amount-green { color:var(--neon-emerald); }
+.amount-rose  { color:var(--neon-rose); }
+
+/* ═══════════════════════════════════════════════
+   NO DATA
+   ═══════════════════════════════════════════════ */
+.no-data {
+  text-align:center; padding:48px 20px;
+  color:var(--text-muted); font-size:16px;
+  letter-spacing:1px;
+}
+
+/* ═══════════════════════════════════════════════
+   MODAL (edit-balance)
+   ═══════════════════════════════════════════════ */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background: rgba(4,5,10,0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index:1000;
+  justify-content:center; align-items:center;
+  padding:20px;
+}
+.modal-overlay.active { display:flex; }
+
+.modal-box {
+  background: rgba(14,18,32,0.88);
+  backdrop-filter: blur(28px) saturate(1.3);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3);
+  border: 1.5px solid var(--glass-border2);
+  box-shadow: 0 14px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.07);
+  padding:32px 28px;
+  border-radius: var(--radius);
+  max-width:420px; width:100%;
+}
+.modal-title {
+  font-family:'Orbitron', sans-serif;
+  font-size:18px; font-weight:700;
+  color:var(--gold); text-align:center;
+  letter-spacing:2px; margin-bottom:22px;
+  text-shadow: 0 0 12px rgba(240,192,64,.35);
+}
+.modal-row {
+  display:flex; justify-content:space-between;
+  padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06);
+}
+.modal-row:last-of-type { border-bottom:none; }
+.modal-row-label { color:var(--text-muted); font-size:14px; }
+.modal-row-value { color:var(--text-primary); font-weight:600; font-size:14px; }
+
+.modal-input {
+  width:100%; padding:14px 16px; margin:18px 0 10px;
+  background: rgba(12,15,26,0.78);
+  border: 1.5px solid var(--glass-border2);
+  border-radius: var(--radius-sm);
+  font-family:'Rajdhani', sans-serif;
+  font-size:18px; font-weight:600;
+  color:var(--text-primary); outline:none;
+  transition: border-color .25s, box-shadow .25s;
+}
+.modal-input:focus {
+  border-color:var(--neon-cyan);
+  box-shadow:0 0 14px rgba(34,211,238,.25);
+}
+.modal-btns { display:flex; gap:10px; margin-top:8px; }
+.modal-btns .btn-action { flex:1; text-align:center; justify-content:center; }
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+@media(max-width:540px){
+  .dashboard      { padding:16px 12px 40px; }
+  .dash-title     { font-size:18px; letter-spacing:3px; }
+  .stat-value     { font-size:22px; }
+  .tab            { padding:9px 16px; font-size:13px; }
+  .player-card    { flex-direction:column; align-items:flex-start; }
+  .player-balance { font-size:18px; }
+  .card-amount    { font-size:19px; }
+  .modal-box      { padding:24px 18px; }
+}
 </style>
 </head>
 <body>
 
-<!-- ── LOGIN SCREEN ── -->
+<!-- ═══ PARTICLE CANVAS (same as index) ═══ -->
+<canvas id="bgCanvas"></canvas>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN
+     ═══════════════════════════════════════════════ -->
 <div id="loginScreen" class="login-screen">
-    <div class="login-box">
-        <div class="login-title">🔐 Admin Login</div>
-        <input type="password" id="adminPassword" class="login-input" placeholder="Enter Password" onkeydown="if(event.key==='Enter')adminLogin()">
-        <button class="login-btn" onclick="adminLogin()">LOGIN</button>
-    </div>
+  <div class="login-box">
+    <div class="login-title">ADMIN</div>
+    <div class="login-sub">🔐 SECURE ACCESS</div>
+    <input type="password" id="adminPassword" class="login-input"
+           placeholder="Enter Password"
+           onkeydown="if(event.key==='Enter') adminLogin()">
+    <button class="login-btn" onclick="adminLogin()">Login</button>
+  </div>
 </div>
 
-<!-- ── DASHBOARD ── -->
-<div id="dashboard" class="container">
-    <div class="header">
-        <h1>🎮 Admin Dashboard</h1>
-        <button class="logout-btn" onclick="adminLogout()">Logout</button>
-    </div>
+<!-- ═══════════════════════════════════════════════
+     DASHBOARD
+     ═══════════════════════════════════════════════ -->
+<div id="dashboard" class="dashboard">
 
-    <div class="stats">
-        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-            <div class="stat-label">Total Users</div>
-            <div class="stat-value" id="totalUsers">0</div>
-        </div>
-        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
-            <div class="stat-label">Total Withdrawals</div>
-            <div class="stat-value">Rs <span id="totalWithdrawals">0</span></div>
-        </div>
-    </div>
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="dash-title">🎮 ADMIN DASHBOARD</div>
+    <button class="dash-logout" onclick="adminLogout()">Logout</button>
+  </div>
 
-    <div class="tabs">
-        <button class="tab active" onclick="showTab('players', this)">👥 Players</button>
-        <button class="tab"        onclick="showTab('users', this)">📋 Users</button>
-        <button class="tab"        onclick="showTab('deposits', this)">💰 Deposits</button>
-        <button class="tab"        onclick="showTab('withdraws', this)">💸 Withdrawals</button>
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="stat-card" data-color="cyan">
+      <div class="stat-label">Total Users</div>
+      <div class="stat-value" id="totalUsers">0</div>
     </div>
+    <div class="stat-card" data-color="emerald">
+      <div class="stat-label">Online Now</div>
+      <div class="stat-value" id="onlineUsers">0</div>
+    </div>
+    <div class="stat-card" data-color="amber">
+      <div class="stat-label">Total Deposits</div>
+      <div class="stat-value">Rs <span id="totalDeposits">0</span></div>
+    </div>
+    <div class="stat-card" data-color="purple">
+      <div class="stat-label">Total Withdrawals</div>
+      <div class="stat-value">Rs <span id="totalWithdrawals">0</span></div>
+    </div>
+  </div>
 
-    <div id="players" class="tab-content active">
-        <h2 style="margin-bottom:15px;">Live Balances</h2>
-        <div id="playersContent"><div class="no-data">Loading…</div></div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('players',this)">👥 Players</button>
+    <button class="tab"        onclick="showTab('users',this)">📋 Users</button>
+    <button class="tab"        onclick="showTab('deposits',this)">💰 Deposits</button>
+    <button class="tab"        onclick="showTab('withdraws',this)">💸 Withdrawals</button>
+  </div>
+
+  <!-- ── PLAYERS TAB ── -->
+  <div id="players" class="tab-content active">
+    <div class="tab-heading">Live Player Balances</div>
+    <div id="playersContent"><div class="no-data">Loading…</div></div>
+  </div>
+
+  <!-- ── USERS TAB ── -->
+  <div id="users" class="tab-content">
+    <div class="tab-heading">All Users – Manage & Kick</div>
+    <div id="usersContent"><div class="no-data">Loading…</div></div>
+  </div>
+
+  <!-- ── DEPOSITS TAB ── -->
+  <div id="deposits" class="tab-content">
+    <div class="tab-heading">Deposit Requests</div>
+    <div id="depositsContent"><div class="no-data">Loading…</div></div>
+  </div>
+
+  <!-- ── WITHDRAWALS TAB ── -->
+  <div id="withdraws" class="tab-content">
+    <div class="tab-heading">Withdrawal Requests</div>
+    <div id="withdrawsContent"><div class="no-data">Loading…</div></div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<!-- ═══ EDIT BALANCE MODAL ═══ -->
+<div id="editBalanceModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Balance</div>
+    <div class="modal-row">
+      <span class="modal-row-label">User</span>
+      <span class="modal-row-value" id="editUserName">─</span>
     </div>
-    <div id="users" class="tab-content">
-        <h2 style="margin-bottom:15px;">All Users & Login Verify</h2>
-        <div id="usersContent"><div class="no-data">Loading…</div></div>
+    <div class="modal-row">
+      <span class="modal-row-label">Phone</span>
+      <span class="modal-row-value" id="editUserPhone">─</span>
     </div>
-    <div id="deposits" class="tab-content">
-        <h2 style="margin-bottom:15px;">Deposit Requests</h2>
-        <div id="depositsContent"><div class="no-data">Loading…</div></div>
+    <div class="modal-row">
+      <span class="modal-row-label">Current Balance</span>
+      <span class="modal-row-value" id="editCurrentBalance">Rs 0</span>
     </div>
-    <div id="withdraws" class="tab-content">
-        <h2 style="margin-bottom:15px;">Withdrawal Requests</h2>
-        <div id="withdrawsContent"><div class="no-data">Loading…</div></div>
+    <input type="number" id="editNewBalance" class="modal-input" placeholder="New balance">
+    <div class="modal-btns">
+      <button class="btn-action btn-approve" onclick="saveBalance()">Save</button>
+      <button class="btn-action btn-reject"  onclick="closeModal()">Cancel</button>
     </div>
+  </div>
 </div>
 
-<!-- ── EDIT BALANCE MODAL ── -->
-<div id="editBalanceModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-title">Edit Balance</div>
-        <p><strong>User:</strong> <span id="editUserName"></span></p>
-        <p><strong>Phone:</strong> <span id="editUserPhone"></span></p>
-        <p><strong>Current:</strong> Rs <span id="editCurrentBalance"></span></p>
-        <input type="number" id="editNewBalance" class="modal-input" placeholder="New balance">
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn-approve" style="flex:1;" onclick="saveBalance()">Save</button>
-            <button class="btn-reject"  style="flex:1;" onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================
-     MAIN SCRIPT  –  Firebase compat is already loaded above,
-     so firebase.app() / firebase.database() work instantly.
-     ============================================================ -->
+<!-- ═══════════════════════════════════════════════
+     PARTICLE ENGINE  (identical to index)
+     ═══════════════════════════════════════════════ -->
 <script>
-// ── Firebase init (compat SDK – synchronous, no module issues) ──
-const firebaseConfig = {
-    apiKey:                "AIzaSyA8C1-TpsRo0UsATshlI8Dy0v40PnLRlc4",
-    authDomain:            "mines-67d8c.firebaseapp.com",
-    databaseURL:           "https://mines-67d8c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId:             "mines-67d8c",
-    storageBucket:         "mines-67d8c.firebasestorage.app",
-    messagingSenderId:     "918317634273",
-    appId:                 "1:918317634273:web:8527c0d58a1f3de0371da0",
-    measurementId:         "G-NHC6K1X3KZ"
-};
+(function(){
+  const canvas = document.getElementById('bgCanvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H;
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  window.addEventListener('resize',resize); resize();
 
+  const PART_COUNT=90, SHARD_COUNT=16;
+  const PALETTE=[[34,211,238],[96,165,250],[52,211,153],[240,192,64],[251,191,36],[180,195,240]];
+
+  class Particle {
+    constructor(){ this.reset(true); }
+    reset(i){
+      this.x=i?Math.random()*W:(Math.random()<.5?-12:W+12);
+      this.y=i?Math.random()*H:Math.random()*H;
+      this.r=.5+Math.random()*2.4;
+      this.vx=(Math.random()-.5)*.38; this.vy=(Math.random()-.5)*.38;
+      this.col=PALETTE[Math.floor(Math.random()*PALETTE.length)];
+      this.alpha=.12+Math.random()*.5;
+      this.phase=Math.random()*Math.PI*2; this.freq=.35+Math.random()*.55;
+    }
+    update(){ this.x+=this.vx; this.y+=this.vy; this.phase+=this.freq*.016; if(this.x<-30||this.x>W+30||this.y<-30||this.y>H+30) this.reset(false); }
+    draw(){
+      const a=this.alpha+Math.sin(this.phase)*.13, [r,g,b]=this.col;
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r},${g},${b},${a})`; ctx.fill();
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r*3.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r},${g},${b},${a*.16})`; ctx.fill();
+    }
+  }
+  class Shard {
+    constructor(){ this.reset(true); }
+    reset(i){
+      this.x=i?Math.random()*W:-70; this.y=i?Math.random()*H:Math.random()*H;
+      this.w=2.5+Math.random()*4; this.h=28+Math.random()*75;
+      this.angle=-.52+Math.random()*.25; this.speed=.28+Math.random()*.32;
+      this.alpha=.028+Math.random()*.065;
+      this.col=[195+Math.random()*60,210+Math.random()*45,255];
+    }
+    update(){ this.x+=this.speed; if(this.x>W+100)this.reset(false); }
+    draw(){
+      ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(this.angle);
+      const g=ctx.createLinearGradient(0,0,0,this.h), [r,gr,b]=this.col;
+      g.addColorStop(0,`rgba(${r},${gr},${b},0)`);
+      g.addColorStop(.28,`rgba(${r},${gr},${b},${this.alpha})`);
+      g.addColorStop(.72,`rgba(${r},${gr},${b},${this.alpha})`);
+      g.addColorStop(1,`rgba(${r},${gr},${b},0)`);
+      ctx.fillStyle=g; ctx.fillRect(-this.w*.5,0,this.w,this.h); ctx.restore();
+    }
+  }
+
+  const particles=[], shards=[];
+  for(let i=0;i<PART_COUNT;i++) particles.push(new Particle());
+  for(let i=0;i<SHARD_COUNT;i++) shards.push(new Shard());
+
+  function drawBg(){
+    const g=ctx.createLinearGradient(0,0,W*.55,H);
+    g.addColorStop(0,'#0a0c14'); g.addColorStop(.4,'#0e1320');
+    g.addColorStop(.72,'#111a2e'); g.addColorStop(1,'#0c1118');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    [
+      {x:W*.12,y:H*.28,r:W*.24,c:'rgba(34,211,238,.032)'},
+      {x:W*.82,y:H*.68,r:W*.21,c:'rgba(96,165,250,.028)'},
+      {x:W*.48,y:H*.88,r:W*.19,c:'rgba(52,211,153,.022)'},
+      {x:W*.72,y:H*.12,r:W*.17,c:'rgba(240,192,64,.020)'},
+      {x:W*.25,y:H*.75,r:W*.15,c:'rgba(251,191,36,.018)'},
+    ].forEach(b=>{
+      const rg=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
+      rg.addColorStop(0,b.c); rg.addColorStop(1,'transparent');
+      ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
+    });
+  }
+  function loop(){ drawBg(); shards.forEach(s=>{s.update();s.draw();}); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(loop); }
+  loop();
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════
+     FIREBASE + ADMIN LOGIC
+     ═══════════════════════════════════════════════ -->
+<script>
+// ── Firebase init ──
+const firebaseConfig = {
+  apiKey:"AIzaSyA8C1-TpsRo0UsATshlI8Dy0v40PnLRlc4",
+  authDomain:"mines-67d8c.firebaseapp.com",
+  databaseURL:"https://mines-67d8c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"mines-67d8c",
+  storageBucket:"mines-67d8c.firebasestorage.app",
+  messagingSenderId:"918317634273",
+  appId:"1:918317634273:web:8527c0d58a1f3de0371da0",
+  measurementId:"G-NHC6K1X3KZ"
+};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 console.log('✅ Firebase (compat) initialized!');
@@ -285,404 +724,348 @@ console.log('✅ Firebase (compat) initialized!');
 const ADMIN_PASSWORD = 'admin123';
 let currentEditUser  = null;
 
-// ============================================================
-// LOGIN / LOGOUT
-// ============================================================
-function adminLogin() {
-    const password = document.getElementById('adminPassword').value;
-    if (password === ADMIN_PASSWORD) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('dashboard').classList.add('active');
-        setupRealTimeListeners();   // onValue handles initial load too
-        updateStats();
-    } else {
-        alert('❌ Wrong password!');
+// ═══════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════
+function adminLogin(){
+  const pw = document.getElementById('adminPassword').value;
+  if(pw === ADMIN_PASSWORD){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('active');
+    setupRealTimeListeners();
+    updateStats();
+  } else {
+    alert('❌ Wrong password!');
+  }
+}
+function adminLogout(){ if(confirm('Logout?')) location.reload(); }
+
+// ═══════════════════════════════════════════════
+//  REAL-TIME LISTENERS
+// ═══════════════════════════════════════════════
+function setupRealTimeListeners(){
+  db.ref('users').on('value', ()=>{
+    loadPlayers();
+    loadUsers();
+    updateStats();
+  });
+  db.ref('depositRequests').on('value', ()=>{ loadDeposits(); updateStats(); });
+  db.ref('withdrawRequests').on('value', ()=>{ loadWithdraws(); updateStats(); });
+}
+
+// ═══════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════
+async function updateStats(){
+  try {
+    const usersSnap    = await db.ref('users').once('value');
+    const depSnap      = await db.ref('depositRequests').once('value');
+    const withdrawSnap = await db.ref('withdrawRequests').once('value');
+
+    let totalUsers=0, onlineUsers=0;
+    if(usersSnap.exists()){
+      const usersObj = usersSnap.val();
+      totalUsers = Object.keys(usersObj).length;
+      Object.values(usersObj).forEach(u=>{ if(u.isOnline) onlineUsers++; });
     }
+
+    let totalDeposits=0;
+    if(depSnap.exists()){
+      depSnap.forEach(child=>{
+        const d=child.val();
+        if(d.status==='approved') totalDeposits+=(d.amount||0);
+      });
+    }
+
+    let totalWithdrawals=0;
+    if(withdrawSnap.exists()){
+      withdrawSnap.forEach(child=>{
+        const w=child.val();
+        if(w.status==='approved') totalWithdrawals+=(w.amount||0);
+      });
+    }
+
+    document.getElementById('totalUsers').textContent       = totalUsers;
+    document.getElementById('onlineUsers').textContent      = onlineUsers;
+    document.getElementById('totalDeposits').textContent    = totalDeposits.toFixed(0);
+    document.getElementById('totalWithdrawals').textContent = totalWithdrawals.toFixed(0);
+  } catch(e){ console.error('updateStats error:',e); }
 }
 
-function adminLogout() {
-    if (confirm('Logout?')) location.reload();
-}
+// ═══════════════════════════════════════════════
+//  PLAYERS TAB – live balances
+// ═══════════════════════════════════════════════
+async function loadPlayers(){
+  try {
+    const snap    = await db.ref('users').once('value');
+    const content = document.getElementById('playersContent');
+    if(!snap.exists()){ content.innerHTML='<div class="no-data">No players yet</div>'; return; }
 
-// ============================================================
-// REAL-TIME LISTENERS  (fire immediately with current data)
-// ============================================================
-function setupRealTimeListeners() {
-    db.ref('users').on('value', () => {
-        loadPlayers();
-        loadUsers();
-        updateStats();
+    const users = snap.val();
+    let arr = Object.entries(users).map(([phone,data])=>({
+      phone, name:data.name||'Unknown', balance:data.balance||0, isOnline:!!data.isOnline
+    }));
+    arr.sort((a,b)=> b.balance - a.balance);
+
+    let html = '';
+    arr.forEach(u=>{
+      const initials = u.name.charAt(0).toUpperCase();
+      const badge    = u.isOnline
+        ? '<span class="badge badge-online">● Online</span>'
+        : '<span class="badge badge-offline">● Offline</span>';
+      html += `
+        <div class="player-card">
+          <div class="player-left">
+            <div class="player-avatar">${initials}</div>
+            <div>
+              <div class="player-name">${u.name} ${badge}</div>
+              <div class="player-phone">📱 ${u.phone}</div>
+            </div>
+          </div>
+          <div class="player-balance">Rs ${u.balance.toFixed(0)}</div>
+        </div>`;
     });
+    content.innerHTML = html;
+  } catch(e){ console.error('loadPlayers:',e); }
+}
 
-    db.ref('depositRequests').on('value', () => {
-        loadDeposits();
+// ═══════════════════════════════════════════════
+//  USERS TAB – full info + edit + kick
+// ═══════════════════════════════════════════════
+async function loadUsers(){
+  try {
+    const snap    = await db.ref('users').once('value');
+    const content = document.getElementById('usersContent');
+    if(!snap.exists()){ content.innerHTML='<div class="no-data">No users yet</div>'; return; }
+
+    const users = snap.val();
+    let html = '';
+    Object.entries(users).forEach(([phone, u])=>{
+      const badge = u.isOnline
+        ? '<span class="badge badge-online">● Online</span>'
+        : '<span class="badge badge-offline">● Offline</span>';
+
+      const devInfo = u.deviceId
+        ? `<div class="card-info">📱 Device: ${u.deviceId.substring(0,20)}…</div>`
+        : '<div class="card-info">📱 Device: N/A</div>';
+
+      const loginInfo = u.lastLogin
+        ? `<div class="card-info">🕒 Last Login: ${new Date(u.lastLogin).toLocaleString()}</div>`
+        : '';
+
+      const kickBtn = u.isOnline
+        ? `<button class="btn-action btn-kick" onclick="kickUser('${phone}')">⚡ Kick</button>`
+        : '';
+
+      html += `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${u.name||'Unknown'} ${badge}</div>
+              <div class="card-info">📱 ${phone}</div>
+              ${devInfo}
+              ${loginInfo}
+            </div>
+            <div class="btn-row">
+              <button class="btn-action btn-edit" onclick="editBalance('${phone}','${(u.name||'').replace(/'/g,"\\'")}'  ,${u.balance||0})">✏️ Edit</button>
+              ${kickBtn}
+            </div>
+          </div>
+          <div class="card-amount">Rs ${(u.balance||0).toFixed(0)}</div>
+          <div class="card-info">
+            💰 Deposited: Rs ${(u.totalDeposit||0).toFixed(0)} &nbsp;|&nbsp;
+            💸 Withdrawn: Rs ${(u.totalWithdraw||0).toFixed(0)}
+          </div>
+        </div>`;
     });
+    content.innerHTML = html;
+  } catch(e){ console.error('loadUsers:',e); }
+}
 
-    db.ref('withdrawRequests').on('value', () => {
-        loadWithdraws();
-        updateStats();
+// ═══════════════════════════════════════════════
+//  KICK USER
+// ═══════════════════════════════════════════════
+async function kickUser(phone){
+  if(!confirm(`Kick user ${phone} off all devices?`)) return;
+  try {
+    await db.ref(`users/${phone}`).update({ isOnline:false, deviceId:null, kickedAt:Date.now() });
+    alert('✅ User kicked!');
+  } catch(e){ console.error(e); alert('❌ Error!'); }
+}
+
+// ═══════════════════════════════════════════════
+//  DEPOSITS TAB
+// ═══════════════════════════════════════════════
+async function loadDeposits(){
+  try {
+    const snap    = await db.ref('depositRequests').once('value');
+    const content = document.getElementById('depositsContent');
+    if(!snap.exists()){ content.innerHTML='<div class="no-data">No deposit requests yet</div>'; return; }
+
+    let arr = [];
+    snap.forEach(child=>{ arr.push({ firebaseKey:child.key, ...child.val() }); });
+    arr.sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
+
+    let html = '';
+    arr.forEach(d=>{
+      const date   = d.timestamp ? new Date(d.timestamp).toLocaleString() : 'N/A';
+      const badge  = d.status==='pending'  ? 'badge-pending'
+                   : d.status==='approved' ? 'badge-approved' : 'badge-rejected';
+      const btns   = d.status==='pending'
+        ? `<button class="btn-action btn-approve" onclick="approveDeposit('${d.firebaseKey}','${d.phone}',${d.amount})">✓ Approve</button>
+           <button class="btn-action btn-reject"  onclick="rejectDeposit('${d.firebaseKey}')">✗ Reject</button>`
+        : `<button class="btn-action btn-delete"  onclick="deleteDeposit('${d.firebaseKey}')">🗑 Delete</button>`;
+
+      html += `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${d.name||'Unknown'}</div>
+              <div class="card-info">📱 ${d.phone}</div>
+              <div class="card-info">🕒 ${date}</div>
+            </div>
+            <span class="badge ${badge}">${(d.status||'pending').toUpperCase()}</span>
+          </div>
+          <div class="card-amount amount-green">+ Rs ${d.amount}</div>
+          <div class="btn-row">${btns}</div>
+        </div>`;
     });
+    content.innerHTML = html;
+  } catch(e){ console.error('loadDeposits:',e); }
 }
 
-// ============================================================
-// PLAYERS TAB – Live Balances
-// ============================================================
-async function loadPlayers() {
-    try {
-        const snapshot = await db.ref('users').once('value');
-        const content  = document.getElementById('playersContent');
+// ═══════════════════════════════════════════════
+//  WITHDRAWALS TAB
+// ═══════════════════════════════════════════════
+async function loadWithdraws(){
+  try {
+    const snap    = await db.ref('withdrawRequests').once('value');
+    const content = document.getElementById('withdrawsContent');
+    if(!snap.exists()){ content.innerHTML='<div class="no-data">No withdrawal requests yet</div>'; return; }
 
-        if (!snapshot.exists()) {
-            content.innerHTML = '<div class="no-data">No players yet</div>';
-            return;
-        }
+    let arr = [];
+    snap.forEach(child=>{ arr.push({ firebaseKey:child.key, ...child.val() }); });
+    arr.sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
 
-        const users = snapshot.val();
-        let arr = Object.entries(users).map(([phone, data]) => ({
-            phone,
-            name:     data.name || 'Unknown',
-            balance:  data.balance || 0,
-            isOnline: !!data.isOnline
-        }));
-        arr.sort((a, b) => b.balance - a.balance);
+    let html = '';
+    arr.forEach(w=>{
+      const date   = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
+      const badge  = w.status==='pending'  ? 'badge-pending'
+                   : w.status==='approved' ? 'badge-approved' : 'badge-rejected';
+      const method = w.withdrawMethod==='easy' ? 'Easypaisa' : 'JazzCash';
+      const btns   = w.status==='pending'
+        ? `<button class="btn-action btn-approve" onclick="approveWithdraw('${w.firebaseKey}','${w.phone}',${w.amount})">✓ Approve</button>
+           <button class="btn-action btn-reject"  onclick="rejectWithdraw('${w.firebaseKey}')">✗ Reject</button>`
+        : `<button class="btn-action btn-delete"  onclick="deleteWithdraw('${w.firebaseKey}')">🗑 Delete</button>`;
 
-        let html = '';
-        arr.forEach(u => {
-            const tag = u.isOnline
-                ? '<span class="status-online">● ONLINE</span>'
-                : '<span class="status-offline">● Offline</span>';
-            html += `
-                <div class="player-card">
-                    <div>
-                        <div class="player-name">${u.name} ${tag}</div>
-                        <div class="player-phone">📱 ${u.phone}</div>
-                    </div>
-                    <div class="player-balance">Rs ${u.balance.toFixed(0)}</div>
-                </div>`;
-        });
+      html += `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${w.name||'Unknown'}</div>
+              <div class="card-info">📱 ${w.phone}</div>
+              <div class="card-info">💳 ${method}: ${w.jazzCash}</div>
+              <div class="card-info">🕒 ${date}</div>
+            </div>
+            <span class="badge ${badge}">${(w.status||'pending').toUpperCase()}</span>
+          </div>
+          <div class="card-amount amount-rose">− Rs ${w.amount}</div>
+          <div class="btn-row">${btns}</div>
+        </div>`;
+    });
+    content.innerHTML = html;
+  } catch(e){ console.error('loadWithdraws:',e); }
+}
 
-        content.innerHTML = html;
-        console.log('✅ Players loaded:', arr.length);
-    } catch (e) {
-        console.error('loadPlayers error:', e);
-        document.getElementById('playersContent').innerHTML = '<div class="no-data">Error loading players</div>';
+// ═══════════════════════════════════════════════
+//  DEPOSIT ACTIONS
+// ═══════════════════════════════════════════════
+async function approveDeposit(key, phone, amount){
+  if(!confirm('Approve this deposit? Balance will be credited.')) return;
+  try {
+    const snap = await db.ref(`users/${phone}`).once('value');
+    if(snap.exists()){
+      const u = snap.val();
+      await db.ref(`users/${phone}`).update({
+        balance:      (u.balance||0) + amount,
+        totalDeposit: (u.totalDeposit||0) + amount
+      });
     }
+    await db.ref(`depositRequests/${key}`).update({ status:'approved', approvedAt:Date.now() });
+    alert('✅ Deposit approved!');
+  } catch(e){ console.error(e); alert('❌ Error!'); }
+}
+async function rejectDeposit(key){
+  if(!confirm('Reject this deposit?')) return;
+  try { await db.ref(`depositRequests/${key}`).update({ status:'rejected' }); alert('Deposit rejected'); }
+  catch(e){ console.error(e); }
+}
+async function deleteDeposit(key){
+  if(!confirm('Delete this deposit request?')) return;
+  try { await db.ref(`depositRequests/${key}`).remove(); alert('✅ Deleted!'); }
+  catch(e){ console.error(e); }
 }
 
-// ============================================================
-// USERS TAB – All Users + Login Verify + Kick
-// ============================================================
-async function loadUsers() {
-    try {
-        const snapshot = await db.ref('users').once('value');
-        const content  = document.getElementById('usersContent');
-
-        if (!snapshot.exists()) {
-            content.innerHTML = '<div class="no-data">No users yet</div>';
-            return;
-        }
-
-        const users = snapshot.val();
-        let html = '';
-
-        Object.entries(users).forEach(([phone, u]) => {
-            const tag = u.isOnline
-                ? '<span class="status-online">● ONLINE</span>'
-                : '<span class="status-offline">● Offline</span>';
-
-            const devInfo   = u.deviceId
-                ? `<div class="card-info">📱 Device: ${u.deviceId.substring(0,16)}…</div>`
-                : '<div class="card-info">📱 Device: N/A</div>';
-
-            const loginInfo = u.lastLogin
-                ? `<div class="card-info">🕒 Last Login: ${new Date(u.lastLogin).toLocaleString()}</div>`
-                : '';
-
-            const kickBtn   = u.isOnline
-                ? `<button class="btn-kick" onclick="kickUser('${phone}')">⚡ Kick</button>`
-                : '';
-
-            html += `
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">${u.name || 'Unknown'} ${tag}</div>
-                            <div class="card-info">📱 ${phone}</div>
-                            ${devInfo}
-                            ${loginInfo}
-                        </div>
-                        <div>
-                            <button class="btn-edit" onclick="editBalance('${phone}','${(u.name||'').replace(/'/g,"\\'")}',${u.balance||0})">Edit Balance</button>
-                            ${kickBtn}
-                        </div>
-                    </div>
-                    <div class="card-amount">Rs ${(u.balance||0).toFixed(0)}</div>
-                    <div class="card-info">Deposit: Rs ${(u.totalDeposit||0).toFixed(0)} | Withdraw: Rs ${(u.totalWithdraw||0).toFixed(0)}</div>
-                </div>`;
-        });
-
-        content.innerHTML = html;
-        console.log('✅ Users loaded');
-    } catch (e) {
-        console.error('loadUsers error:', e);
-        document.getElementById('usersContent').innerHTML = '<div class="no-data">Error loading users</div>';
+// ═══════════════════════════════════════════════
+//  WITHDRAWAL ACTIONS
+// ═══════════════════════════════════════════════
+async function approveWithdraw(key, phone, amount){
+  if(!confirm('Step 1: Have you sent the money to the user?')) return;
+  if(!confirm('Step 2: Confirm approval?')) return;
+  try {
+    const snap = await db.ref(`users/${phone}`).once('value');
+    if(snap.exists()){
+      const u = snap.val();
+      await db.ref(`users/${phone}`).update({
+        balance:       Math.max(0, (u.balance||0) - amount),
+        totalWithdraw: (u.totalWithdraw||0) + amount
+      });
     }
+    await db.ref(`withdrawRequests/${key}`).update({ status:'approved', approvedAt:Date.now() });
+    alert('✅ Withdrawal approved!');
+  } catch(e){ console.error(e); alert('❌ Error!'); }
+}
+async function rejectWithdraw(key){
+  if(!confirm('Reject this withdrawal?')) return;
+  try { await db.ref(`withdrawRequests/${key}`).update({ status:'rejected' }); alert('Withdrawal rejected'); }
+  catch(e){ console.error(e); }
+}
+async function deleteWithdraw(key){
+  if(!confirm('Delete this withdrawal request?')) return;
+  try { await db.ref(`withdrawRequests/${key}`).remove(); alert('✅ Deleted!'); }
+  catch(e){ console.error(e); }
 }
 
-// ============================================================
-// KICK USER
-// ============================================================
-async function kickUser(phone) {
-    if (!confirm(`Kick user ${phone} off all devices?`)) return;
-    try {
-        await db.ref(`users/${phone}`).update({
-            isOnline: false,
-            deviceId: null,
-            kickedAt: Date.now()
-        });
-        alert('✅ User kicked!');
-    } catch (e) {
-        console.error(e);
-        alert('❌ Error kicking user!');
-    }
+// ═══════════════════════════════════════════════
+//  EDIT BALANCE MODAL
+// ═══════════════════════════════════════════════
+function editBalance(phone, name, balance){
+  currentEditUser = phone;
+  document.getElementById('editUserName').textContent       = name;
+  document.getElementById('editUserPhone').textContent      = phone;
+  document.getElementById('editCurrentBalance').textContent = 'Rs ' + Number(balance).toFixed(0);
+  document.getElementById('editNewBalance').value           = Number(balance).toFixed(0);
+  document.getElementById('editBalanceModal').classList.add('active');
 }
-
-// ============================================================
-// DEPOSITS TAB
-// ============================================================
-async function loadDeposits() {
-    try {
-        const snapshot = await db.ref('depositRequests').once('value');
-        const content  = document.getElementById('depositsContent');
-
-        if (!snapshot.exists()) {
-            content.innerHTML = '<div class="no-data">No deposits yet</div>';
-            return;
-        }
-
-        let arr = [];
-        snapshot.forEach(child => {
-            arr.push({ firebaseKey: child.key, ...child.val() });
-        });
-        arr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        let html = '';
-        arr.forEach(d => {
-            const date  = d.timestamp ? new Date(d.timestamp).toLocaleString() : 'N/A';
-            const sClass = d.status === 'pending' ? 'status-pending' :
-                           d.status === 'approved' ? 'status-approved' : 'status-rejected';
-            html += `
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">${d.name || 'Unknown'}</div>
-                            <div class="card-info">📱 ${d.phone}</div>
-                            <div class="card-info">🕒 ${date}</div>
-                        </div>
-                        <span class="${sClass}">${(d.status||'pending').toUpperCase()}</span>
-                    </div>
-                    <div class="card-amount">Rs ${d.amount}</div>
-                    ${d.status === 'pending' ? `
-                        <div style="margin-top:10px;">
-                            <button class="btn-approve" onclick="approveDeposit('${d.firebaseKey}','${d.phone}',${d.amount})">✓ Approve</button>
-                            <button class="btn-reject"  onclick="rejectDeposit('${d.firebaseKey}')">✗ Reject</button>
-                        </div>` : `
-                        <div style="margin-top:10px;">
-                            <button class="btn-delete" onclick="deleteDeposit('${d.firebaseKey}')">🗑 Delete</button>
-                        </div>`}
-                </div>`;
-        });
-
-        content.innerHTML = html;
-    } catch (e) {
-        console.error('loadDeposits error:', e);
-    }
+async function saveBalance(){
+  const val = parseFloat(document.getElementById('editNewBalance').value);
+  if(isNaN(val) || val < 0){ alert('Invalid balance!'); return; }
+  try {
+    await db.ref(`users/${currentEditUser}`).update({ balance: val });
+    alert('✅ Balance updated!');
+    closeModal();
+  } catch(e){ console.error(e); alert('❌ Error!'); }
 }
+function closeModal(){ document.getElementById('editBalanceModal').classList.remove('active'); }
 
-// ============================================================
-// WITHDRAWALS TAB
-// ============================================================
-async function loadWithdraws() {
-    try {
-        const snapshot = await db.ref('withdrawRequests').once('value');
-        const content  = document.getElementById('withdrawsContent');
-
-        if (!snapshot.exists()) {
-            content.innerHTML = '<div class="no-data">No withdrawals yet</div>';
-            return;
-        }
-
-        let arr = [];
-        snapshot.forEach(child => {
-            arr.push({ firebaseKey: child.key, ...child.val() });
-        });
-        arr.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        let html = '';
-        arr.forEach(w => {
-            const date  = w.timestamp ? new Date(w.timestamp).toLocaleString() : 'N/A';
-            const sClass = w.status === 'pending' ? 'status-pending' :
-                           w.status === 'approved' ? 'status-approved' : 'status-rejected';
-            html += `
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <div class="card-title">${w.name || 'Unknown'}</div>
-                            <div class="card-info">📱 ${w.phone}</div>
-                            <div class="card-info">💰 JazzCash: ${w.jazzCash}</div>
-                            <div class="card-info">🕒 ${date}</div>
-                        </div>
-                        <span class="${sClass}">${(w.status||'pending').toUpperCase()}</span>
-                    </div>
-                    <div class="card-amount">Rs ${w.amount}</div>
-                    ${w.status === 'pending' ? `
-                        <div style="margin-top:10px;">
-                            <button class="btn-approve" onclick="approveWithdraw('${w.firebaseKey}','${w.phone}',${w.amount})">✓ Approve</button>
-                            <button class="btn-reject"  onclick="rejectWithdraw('${w.firebaseKey}')">✗ Reject</button>
-                        </div>` : `
-                        <div style="margin-top:10px;">
-                            <button class="btn-delete" onclick="deleteWithdraw('${w.firebaseKey}')">🗑 Delete</button>
-                        </div>`}
-                </div>`;
-        });
-
-        content.innerHTML = html;
-    } catch (e) {
-        console.error('loadWithdraws error:', e);
-    }
-}
-
-// ============================================================
-// STATS – Total Users & Total Withdrawals
-// ============================================================
-async function updateStats() {
-    try {
-        const usersSnap    = await db.ref('users').once('value');
-        const withdrawSnap = await db.ref('withdrawRequests').once('value');
-
-        const totalUsers = usersSnap.exists() ? Object.keys(usersSnap.val()).length : 0;
-
-        let totalWithdrawals = 0;
-        if (withdrawSnap.exists()) {
-            withdrawSnap.forEach(child => {
-                const w = child.val();
-                if (w.status === 'approved') totalWithdrawals += (w.amount || 0);
-            });
-        }
-
-        document.getElementById('totalUsers').textContent       = totalUsers;
-        document.getElementById('totalWithdrawals').textContent = totalWithdrawals.toFixed(0);
-        console.log('✅ Stats – Users:', totalUsers, '| Withdrawals:', totalWithdrawals);
-    } catch (e) {
-        console.error('updateStats error:', e);
-    }
-}
-
-// ============================================================
-// DEPOSIT ACTIONS
-// ============================================================
-async function approveDeposit(key, phone, amount) {
-    if (!confirm('Approve this deposit? Balance will be credited.')) return;
-    try {
-        const snap = await db.ref(`users/${phone}`).once('value');
-        if (snap.exists()) {
-            const u = snap.val();
-            await db.ref(`users/${phone}`).update({
-                balance:      (u.balance || 0) + amount,
-                totalDeposit: (u.totalDeposit || 0) + amount
-            });
-        }
-        await db.ref(`depositRequests/${key}`).update({ status: 'approved', approvedAt: Date.now() });
-        alert('✅ Deposit approved!');
-    } catch (e) { console.error(e); alert('❌ Error!'); }
-}
-
-async function rejectDeposit(key) {
-    if (!confirm('Reject this deposit?')) return;
-    try {
-        await db.ref(`depositRequests/${key}`).update({ status: 'rejected' });
-        alert('Deposit rejected');
-    } catch (e) { console.error(e); }
-}
-
-async function deleteDeposit(key) {
-    if (!confirm('Delete this deposit request?')) return;
-    try {
-        await db.ref(`depositRequests/${key}`).remove();
-        alert('✅ Deleted!');
-    } catch (e) { console.error(e); }
-}
-
-// ============================================================
-// WITHDRAWAL ACTIONS
-// ============================================================
-async function approveWithdraw(key, phone, amount) {
-    if (!confirm('Step 1: Have you sent money to user?')) return;
-    if (!confirm('Step 2: Confirm approval?'))           return;
-    try {
-        const snap = await db.ref(`users/${phone}`).once('value');
-        if (snap.exists()) {
-            const u = snap.val();
-            await db.ref(`users/${phone}`).update({
-                balance:       Math.max(0, (u.balance || 0) - amount),
-                totalWithdraw: (u.totalWithdraw || 0) + amount
-            });
-        }
-        await db.ref(`withdrawRequests/${key}`).update({ status: 'approved', approvedAt: Date.now() });
-        alert('✅ Withdrawal approved!');
-    } catch (e) { console.error(e); alert('❌ Error!'); }
-}
-
-async function rejectWithdraw(key) {
-    if (!confirm('Reject this withdrawal?')) return;
-    try {
-        await db.ref(`withdrawRequests/${key}`).update({ status: 'rejected' });
-        alert('Withdrawal rejected');
-    } catch (e) { console.error(e); }
-}
-
-async function deleteWithdraw(key) {
-    if (!confirm('Delete this withdrawal request?')) return;
-    try {
-        await db.ref(`withdrawRequests/${key}`).remove();
-        alert('✅ Deleted!');
-    } catch (e) { console.error(e); }
-}
-
-// ============================================================
-// EDIT BALANCE MODAL
-// ============================================================
-function editBalance(phone, name, balance) {
-    currentEditUser = phone;
-    document.getElementById('editUserName').textContent       = name;
-    document.getElementById('editUserPhone').textContent      = phone;
-    document.getElementById('editCurrentBalance').textContent = Number(balance).toFixed(0);
-    document.getElementById('editNewBalance').value           = Number(balance).toFixed(0);
-    document.getElementById('editBalanceModal').classList.add('active');
-}
-
-async function saveBalance() {
-    const val = parseFloat(document.getElementById('editNewBalance').value);
-    if (isNaN(val) || val < 0) { alert('Invalid balance!'); return; }
-    try {
-        await db.ref(`users/${currentEditUser}`).update({ balance: val });
-        alert('✅ Balance updated!');
-        closeModal();
-    } catch (e) { console.error(e); alert('❌ Error!'); }
-}
-
-function closeModal() {
-    document.getElementById('editBalanceModal').classList.remove('active');
-}
-
-// ============================================================
-// TAB SWITCHING
-// ============================================================
-function showTab(tabName, btn) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(tabName).classList.add('active');
+// ═══════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════
+function showTab(tabName, btn){
+  document.querySelectorAll('.tab').forEach(t=> t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=> c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabName).classList.add('active');
 }
 </script>
 
