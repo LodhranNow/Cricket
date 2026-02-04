@@ -562,12 +562,8 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 <!-- ═══ KICKED OVERLAY ═══ -->
 <div id="kickedOverlay" class="kicked-overlay">
   <div class="kicked-box">
-    <h2>⚡ SESSION TERMINATED</h2>
-    <p>آپ کو Admin نے لاگ آؤٹ کیا گیا ہے۔</p>
-    <button class="btn-green" onclick="location.reload()"
-            style="width:auto;padding:11px 34px;margin:0 auto;display:inline-block;">
-      لاگ ان دوبارہ
-    </button>
+    <div style="font-size:50px; margin-bottom:12px;">🚫</div>
+    <h2>SESSION TERMINATED</h2>
   </div>
 </div>
 
@@ -632,7 +628,7 @@ button:disabled { opacity:.38; cursor:not-allowed; }
       <div class="pay-label"><span class="badge easy">Easypaisa</span></div>
       <div class="pay-number easy-num">03193433587</div>
     </div>
-    <input type="number" id="depositAmount" placeholder="Amount (Minimum Rs 300)" min="300">
+    <input type="number" id="depositAmount" placeholder="Amount (Minimum Rs 500)" min="500">
     <div id="depositCooldown" style="display:none;" class="timer-msg"></div>
     <button class="btn-green" onclick="submitDeposit()">Submit Request</button>
     <button class="btn-red"   onclick="closeModal('depositModal')">Cancel</button>
@@ -932,9 +928,22 @@ function listenToUserData(phone){
   window.dbOnValue(window.dbRef(window.db,`users/${phone}`), snap=>{
     if(!snap.exists()) return;
     const d = snap.val();
+    
+    // Check if banned
+    if(d.banned){
+      showKickedScreen();
+      return;
+    }
+    
+    // Check if kicked (device changed or logged out)
+    const currentDeviceId = getDeviceFingerprint();
+    if(!d.isOnline || (d.deviceId && d.deviceId !== currentDeviceId)){
+      showKickedScreen();
+      return;
+    }
+    
     gameState.balance = d.balance||0;
     updateDisplay();
-    if(d.kickedAt && d.lastLogin && d.kickedAt > d.lastLogin) showKickedScreen();
   });
 }
 async function submitDepositRequest(uid,name,phone,amount){
@@ -970,40 +979,128 @@ async function handleLogin(){
   showMessage('loginMsg','Logging in…','success');
 
   const deviceId = getDeviceFingerprint();
-  let userData   = await getUserData(phone);
+  const namePairKey = `${name}_${phone}`;
 
-  if(userData && userData.isOnline && userData.deviceId && userData.deviceId!==deviceId){
-    showMessage('loginMsg','یہ اکاؤنٹ پہلے سے کسی اور ڈیوائس پر لاگ ان ہے!','error');
-    return;
+  try {
+    // Check 1: Name-Phone pair lock
+    const pairSnap = await window.dbGet(window.dbRef(window.db, `namePhonePairs/${namePairKey}`));
+    if(pairSnap.exists()){
+      const pairData = pairSnap.val();
+      if(pairData.banned){
+        showKickedScreen();
+        return;
+      }
+      if(pairData.deviceId !== deviceId){
+        showMessage('loginMsg','❌ This name-phone combination is locked to another device!','error');
+        return;
+      }
+    }
+    
+    // Check 2: Device limit (max 2 users per device)
+    const deviceTrackSnap = await window.dbGet(window.dbRef(window.db, `deviceTracking/${deviceId}`));
+    if(deviceTrackSnap.exists()){
+      const deviceData = deviceTrackSnap.val();
+      const usersOnDevice = deviceData.users || {};
+      const userCount = Object.keys(usersOnDevice).length;
+      
+      // If user not already on this device and device has 2 users
+      if(!usersOnDevice[phone] && userCount >= 2){
+        showMessage('loginMsg','❌ Maximum 2 accounts per device!','error');
+        return;
+      }
+      
+      // Check if phone exists with different name
+      if(usersOnDevice[phone] && usersOnDevice[phone].name !== name){
+        showMessage('loginMsg','❌ Phone number registered with different name!','error');
+        return;
+      }
+    }
+    
+    // Check 3: User already logged in or banned
+    const userSnap = await window.dbGet(window.dbRef(window.db, `users/${phone}`));
+    if(userSnap.exists()){
+      const userData = userSnap.val();
+      
+      // Check if banned
+      if(userData.banned){
+        showKickedScreen();
+        return;
+      }
+      
+      // Check if logged in elsewhere
+      if(userData.isOnline && userData.deviceId && userData.deviceId !== deviceId){
+        showMessage('loginMsg','یہ اکاؤنٹ پہلے سے کسی اور ڈیوائس پر لاگ ان ہے!','error');
+        return;
+      }
+      
+      // Check name mismatch
+      if(userData.name !== name){
+        showMessage('loginMsg','❌ Name does not match registered name!','error');
+        return;
+      }
+    }
+    
+    // All checks passed - proceed with login
+    const now = Date.now();
+    const updates = {};
+    
+    let userData = userSnap.exists() ? userSnap.val() : null;
+    
+    // Update or create user data
+    if(!userData){
+      updates[`users/${phone}`] = {
+        name, phone, balance:0, totalDeposit:0, totalWithdraw:0,
+        createdAt:now, deviceId, isOnline:true, lastLogin:now
+      };
+    } else {
+      updates[`users/${phone}/deviceId`] = deviceId;
+      updates[`users/${phone}/isOnline`] = true;
+      updates[`users/${phone}/lastLogin`] = now;
+      updates[`users/${phone}/name`] = name;
+    }
+    
+    // Lock name-phone pair to this device
+    updates[`namePhonePairs/${namePairKey}/deviceId`] = deviceId;
+    updates[`namePhonePairs/${namePairKey}/registeredAt`] = now;
+    updates[`namePhonePairs/${namePairKey}/locked`] = true;
+    
+    // Track device usage
+    updates[`deviceTracking/${deviceId}/users/${phone}/name`] = name;
+    updates[`deviceTracking/${deviceId}/users/${phone}/lastLogin`] = now;
+    
+    await window.dbUpdate(window.dbRef(window.db), updates);
+    
+    // Continue with normal login flow
+    gameState.userId = phone;
+    gameState.userName = name;
+    gameState.userPhone = phone;
+    gameState.balance = userData ? (userData.balance || 0) : 0;
+    
+    document.getElementById('displayName').textContent = gameState.userName;
+    document.getElementById('displayPhone').textContent = phone;
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('gameScreen').classList.remove('hidden');
+    
+    listenToUserData(phone);
+    initializeGrid();
+    updateDisplay();
+    
+    if(!userData){
+      showMessage('loginMsg','✅ Account created!','success');
+    }
+    
+  } catch(e){
+    console.error(e);
+    showMessage('loginMsg','❌ Login failed: ' + e.message,'error');
   }
-
-  const now = Date.now();
-  if(!userData){
-    userData = {name,phone,balance:0,totalDeposit:0,totalWithdraw:0,createdAt:now,deviceId,isOnline:true,lastLogin:now};
-    if(!(await saveUserData(phone,userData))){ showMessage('loginMsg','Connection error!','error'); return; }
-    showMessage('loginMsg','✅ Account created!','success');
-  } else {
-    await window.dbUpdate(window.dbRef(window.db,`users/${phone}`),{deviceId,isOnline:true,lastLogin:now,name});
-  }
-
-  gameState.userId   = phone;
-  gameState.userName  = userData.name||name;
-  gameState.userPhone = phone;
-  gameState.balance   = userData.balance||0;
-
-  document.getElementById('displayName').textContent  = gameState.userName;
-  document.getElementById('displayPhone').textContent = phone;
-  document.getElementById('loginScreen').classList.add('hidden');
-  document.getElementById('gameScreen').classList.remove('hidden');
-
-  listenToUserData(phone);
-  initializeGrid();
-  updateDisplay();
 }
 
 async function handleLogout(){
   if(confirm('Are you sure you want to logout?')){
-    try{ await fbReady(); await window.dbUpdate(window.dbRef(window.db,`users/${gameState.userPhone}`),{isOnline:false,deviceId:null}); }catch(e){}
+    try{ 
+      await fbReady(); 
+      await window.dbUpdate(window.dbRef(window.db,`users/${gameState.userPhone}`),{isOnline:false,deviceId:null}); 
+    }catch(e){}
     location.reload();
   }
 }
@@ -1012,7 +1109,7 @@ function showKickedScreen(){ document.getElementById('kickedOverlay').classList.
 /* ─── Deposit ─── */
 async function submitDeposit(){
   const amount = parseInt(document.getElementById('depositAmount').value);
-  if(!amount||amount<300){ alert('Minimum deposit Rs 300!'); return; }
+  if(!amount||amount<500){ alert('Minimum deposit Rs 500!'); return; }
   const cd = checkDepositCooldown();
   if(!cd.allowed){ alert(`⏳ Wait ${cd.remaining} more minutes.`); return; }
   if(await submitDepositRequest(gameState.userId,gameState.userName,gameState.userPhone,amount)){
