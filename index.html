@@ -592,8 +592,8 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   <div id="cooldownMsg" class="timer-msg" style="display:none;"></div>
 
   <div class="btn-row">
-    <button class="btn-green"  onclick="openDepositModal()">DEPOSIT</button>
-    <button class="btn-orange" onclick="openWithdrawModal()">WITHDRAW</button>
+    <button class="btn-green" id="depositBtn" onclick="openDepositModal()">DEPOSIT</button>
+    <button class="btn-orange" id="withdrawBtn" onclick="openWithdrawModal()">WITHDRAW</button>
   </div>
 
   <div class="balance-section">
@@ -945,6 +945,70 @@ function listenToUserData(phone){
     gameState.balance = d.balance||0;
     updateDisplay();
   });
+  
+  // Listen to deposit requests
+  window.dbOnValue(window.dbRef(window.db,'depositRequests'), snap=>{
+    updateDepositButtonState(phone, snap);
+  });
+  
+  // Listen to withdraw requests
+  window.dbOnValue(window.dbRef(window.db,'withdrawRequests'), snap=>{
+    updateWithdrawButtonState(phone, snap);
+  });
+}
+
+function updateDepositButtonState(phone, snapshot){
+  const btn = document.getElementById('depositBtn');
+  if(!btn) return;
+  
+  let hasPending = false;
+  if(snapshot && snapshot.exists()){
+    snapshot.forEach(child => {
+      const req = child.val();
+      if(req.phone === phone && req.status === 'pending'){
+        hasPending = true;
+      }
+    });
+  }
+  
+  if(hasPending){
+    btn.textContent = '⏳ PENDING';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+  } else {
+    btn.textContent = 'DEPOSIT';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  }
+}
+
+function updateWithdrawButtonState(phone, snapshot){
+  const btn = document.getElementById('withdrawBtn');
+  if(!btn) return;
+  
+  let hasPending = false;
+  if(snapshot && snapshot.exists()){
+    snapshot.forEach(child => {
+      const req = child.val();
+      if(req.phone === phone && req.status === 'pending'){
+        hasPending = true;
+      }
+    });
+  }
+  
+  if(hasPending){
+    btn.textContent = '⏳ PENDING';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+  } else {
+    btn.textContent = 'WITHDRAW';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  }
 }
 async function submitDepositRequest(uid,name,phone,amount){
   await fbReady();
@@ -982,12 +1046,32 @@ async function handleLogin(){
   const namePairKey = `${name}_${phone}`;
 
   try {
+    // FIRST CHECK: Banned phones list (extra security layer)
+    const bannedPhoneSnap = await window.dbGet(window.dbRef(window.db, `bannedPhones/${phone}`));
+    if(bannedPhoneSnap.exists()){
+      showMessage('loginMsg','','error');
+      setTimeout(() => showKickedScreen(), 500);
+      return;
+    }
+    
+    // SECOND CHECK: Phone number ban check in users
+    const phoneCheckSnap = await window.dbGet(window.dbRef(window.db, `users/${phone}`));
+    if(phoneCheckSnap.exists()){
+      const phoneUserData = phoneCheckSnap.val();
+      if(phoneUserData.banned){
+        showMessage('loginMsg','','error');
+        setTimeout(() => showKickedScreen(), 500);
+        return;
+      }
+    }
+    
     // Check 1: Name-Phone pair lock
     const pairSnap = await window.dbGet(window.dbRef(window.db, `namePhonePairs/${namePairKey}`));
     if(pairSnap.exists()){
       const pairData = pairSnap.val();
       if(pairData.banned){
-        showKickedScreen();
+        showMessage('loginMsg','','error');
+        setTimeout(() => showKickedScreen(), 500);
         return;
       }
       if(pairData.deviceId !== deviceId){
