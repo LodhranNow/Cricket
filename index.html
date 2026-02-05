@@ -615,6 +615,30 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   background: linear-gradient(135deg, rgba(251,191,36,0.34), rgba(251,191,36,0.24));
   box-shadow: 0 0 30px rgba(251,191,36,0.4);
 }
+
+/* Payment number display */
+.payment-number-display {
+  background: rgba(8,10,18,0.65);
+  border: 1.5px solid rgba(255,255,255,.13);
+  padding: 16px;
+  border-radius: 10px;
+  margin: 12px 0;
+  text-align: center;
+}
+.payment-number {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--neon-emerald);
+  letter-spacing: 2px;
+  margin: 8px 0;
+}
+.copy-message {
+  font-size: 13px;
+  color: var(--gold);
+  direction: rtl;
+  margin-top: 8px;
+}
 </style>
 </head>
 <body>
@@ -657,14 +681,11 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   <div id="cooldownMsg" class="timer-msg" style="display:none;"></div>
 
   <div class="btn-row">
-    <!-- Deposit Button Container with Multiple States -->
+    <!-- Deposit Button with States -->
     <div style="flex:1;">
       <button class="btn-green" id="depositBtnNormal" onclick="openDepositModal()" style="width:100%; display:none;">DEPOSIT</button>
-      <button class="btn-amber" id="depositBtnPendingStep1" onclick="showDepositStatus()" style="width:100%; display:none;">⏳ PENDING</button>
-      <button class="btn-green" id="depositBtnApprovedStep1" onclick="confirmDeposit()" style="width:100%; display:none;">✅ CONFIRM DEPOSIT</button>
-      <button class="btn-orange" id="depositBtnRejectedStep1" onclick="retryDeposit()" style="width:100%; display:none;">RETRY DEPOSIT</button>
-      <button class="btn-blue" id="depositBtnConfirmedStep2" onclick="showDepositStatus()" style="width:100%; display:none;">⏳ CONFIRMING</button>
-      <button class="btn-orange" id="depositBtnCancelledStep2" onclick="retryDeposit()" style="width:100%; display:none;">RETRY DEPOSIT</button>
+      <button class="btn-amber" id="depositBtnPending" onclick="showDepositStatus()" style="width:100%; display:none;">⏳ PENDING</button>
+      <button class="btn-orange" id="depositBtnRejected" onclick="retryDeposit()" style="width:100%; display:none;">RETRY DEPOSIT</button>
       <button class="btn-red" id="depositBtnLocked" disabled style="width:100%; display:none; opacity:0.5;">🔒 LOCKED</button>
     </div>
     <button class="btn-orange" id="withdrawBtn" onclick="openWithdrawModal()">WITHDRAW</button>
@@ -776,15 +797,24 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 <!-- ═══ DEPOSIT MODAL ═══ -->
 <div id="depositModal" class="modal">
   <div class="modal-content">
-    <div class="modal-title">Create Deposit Request</div>
+    <div class="modal-title">Deposit Request</div>
+    
+    <!-- Payment Method Toggle -->
     <div class="withdraw-toggle">
-      <button id="depTabJazz" class="active-tab" onclick="switchDepositTab('jazz')">JazzCash</button>
-      <button id="depTabEasy" onclick="switchDepositTab('easy')">Easypaisa</button>
+      <button id="depTabJazz" class="active-tab" onclick="switchDepositTab('jazz')">JAZZCASH</button>
+      <button id="depTabEasy" onclick="switchDepositTab('easy')">EASYPAISA</button>
     </div>
-    <input type="number" id="depositAmount" placeholder="Amount (Min Rs 500)" min="500">
-    <div style="font-size:12px; color:var(--text-muted); text-align:center; margin:8px 0; direction:rtl;">
-      نوٹ: پہلے درخواست بنائیں، پھر رقم بھیجیں
+    
+    <!-- Payment Number Display -->
+    <div id="depositPaymentInfo" class="payment-number-display">
+      <div class="payment-number" id="depositPaymentNumber">03266916283</div>
+      <div class="copy-message">نمبر کاپی کر کے ادائیگی کریں۔</div>
     </div>
+    
+    <!-- Amount Input -->
+    <input type="number" id="depositAmount" placeholder="Amount (Minimum Rs 500)" min="500">
+    
+    <!-- Submit Button -->
     <button class="btn-green" onclick="submitDepositRequest()">Submit Request</button>
     <button class="btn-red" onclick="closeModal('depositModal')">Cancel</button>
   </div>
@@ -1819,24 +1849,34 @@ function showMessage(elId, text, type){
 }
 
 /* ═══════════════════════════════════════════════
-   2-STEP DEPOSIT SYSTEM
+   SINGLE-STEP DEPOSIT SYSTEM (Same as Withdraw)
    ═══════════════════════════════════════════════ */
 
 let currentDepositRequest = null;
 let depositMethod = 'jazz';
 let depositLockInterval = null;
 
+// Payment numbers
+const JAZZCASH_NUMBER = '03266916283';
+const EASYPAISA_NUMBER = '03193433587';
+
 function switchDepositTab(method){
   depositMethod = method;
   const tabJ = document.getElementById('depTabJazz');
   const tabE = document.getElementById('depTabEasy');
+  const numberEl = document.getElementById('depositPaymentNumber');
+  
   if(method === 'jazz'){
     tabJ.classList.add('active-tab');
     tabJ.classList.remove('easy-active');
     tabE.classList.remove('active-tab','easy-active');
+    numberEl.textContent = JAZZCASH_NUMBER;
+    numberEl.style.color = 'var(--neon-emerald)';
   } else {
     tabE.classList.add('active-tab','easy-active');
     tabJ.classList.remove('active-tab');
+    numberEl.textContent = EASYPAISA_NUMBER;
+    numberEl.style.color = 'var(--neon-amber)';
   }
 }
 
@@ -1846,7 +1886,7 @@ function listenToDepositRequests(phone){
     if(snapshot.exists()){
       snapshot.forEach(child => {
         const req = child.val();
-        if(req.phone === phone && req.status !== 'completed'){
+        if(req.phone === phone && req.status === 'pending'){
           activeDeposit = { id: child.key, ...req };
         }
       });
@@ -1881,18 +1921,17 @@ async function checkDepositLock(){
 }
 
 async function updateDepositButtonState(){
+  // Hide all buttons
   document.getElementById('depositBtnNormal').style.display = 'none';
-  document.getElementById('depositBtnPendingStep1').style.display = 'none';
-  document.getElementById('depositBtnApprovedStep1').style.display = 'none';
-  document.getElementById('depositBtnRejectedStep1').style.display = 'none';
-  document.getElementById('depositBtnConfirmedStep2').style.display = 'none';
-  document.getElementById('depositBtnCancelledStep2').style.display = 'none';
+  document.getElementById('depositBtnPending').style.display = 'none';
+  document.getElementById('depositBtnRejected').style.display = 'none';
   document.getElementById('depositBtnLocked').style.display = 'none';
   
   const statusDiv = document.getElementById('depositStatusMessages');
   statusDiv.style.display = 'none';
   statusDiv.innerHTML = '';
   
+  // Check lock first
   const lockStatus = await checkDepositLock();
   if(lockStatus.locked){
     document.getElementById('depositBtnLocked').style.display = 'block';
@@ -1901,37 +1940,30 @@ async function updateDepositButtonState(){
     return;
   }
   
-  if(!currentDepositRequest){
-    document.getElementById('depositBtnNormal').style.display = 'block';
+  // Check if has pending request
+  if(currentDepositRequest && currentDepositRequest.status === 'pending'){
+    document.getElementById('depositBtnPending').style.display = 'block';
     return;
   }
   
-  const status = currentDepositRequest.status;
-  const step = currentDepositRequest.step;
-  
-  if(status === 'pending' && step === 1){
-    document.getElementById('depositBtnPendingStep1').style.display = 'block';
-  } else if(status === 'approved' && step === 1){
-    document.getElementById('depositBtnApprovedStep1').style.display = 'block';
-    showDepositMessage('رقم بھیجنے کا شکریہ، نیچے دیے گئے بٹن پر کلک کریں۔', 'success');
-  } else if(status === 'rejected' && step === 1){
-    document.getElementById('depositBtnRejectedStep1').style.display = 'block';
-    const userSnap = await window.dbGet(window.dbRef(window.db, `users/${gameState.userPhone}`));
-    const rejections = userSnap.exists() ? (userSnap.val().depositRejections || 0) : 0;
-    showDepositMessage(`آپ کی ڈپازٹ درخواست مسترد کر دی گئی ہے۔<br><small>Rejections: ${rejections}/3</small>`, 'error');
-  } else if(status === 'confirmed' && step === 2){
-    document.getElementById('depositBtnConfirmedStep2').style.display = 'block';
-    showDepositMessage('Waiting for final admin approval...', 'info');
-  } else if(status === 'cancelled' && step === 2){
-    document.getElementById('depositBtnCancelledStep2').style.display = 'block';
-    const userSnap = await window.dbGet(window.dbRef(window.db, `users/${gameState.userPhone}`));
-    const rejections = userSnap.exists() ? (userSnap.val().depositRejections || 0) : 0;
-    showDepositMessage(`آپ کی ڈپازٹ کی تصدیق مسترد کر دی گئی ہے۔<br><small>Rejections: ${rejections}/3</small>`, 'error');
-  } else if(status === 'completed'){
-    document.getElementById('depositBtnNormal').style.display = 'block';
-    showDepositMessage('✅ Deposit Completed!', 'success');
-    setTimeout(() => { document.getElementById('depositStatusMessages').style.display = 'none'; }, 5000);
+  // Check if last request was rejected
+  const userSnap = await window.dbGet(window.dbRef(window.db, `users/${gameState.userPhone}`));
+  if(userSnap.exists()){
+    const user = userSnap.val();
+    const rejections = user.depositRejections || 0;
+    const lastRejectedAt = user.lastDepositRejectedAt || 0;
+    const now = Date.now();
+    
+    // Show rejection message if rejected within last 5 minutes
+    if(rejections > 0 && rejections < 3 && (now - lastRejectedAt) < 5 * 60 * 1000){
+      document.getElementById('depositBtnRejected').style.display = 'block';
+      showDepositMessage(`آپ کی ڈپازٹ درخواست مسترد کر دی گئی ہے۔<br><small>Rejections: ${rejections}/3</small>`, 'error');
+      return;
+    }
   }
+  
+  // Show normal button
+  document.getElementById('depositBtnNormal').style.display = 'block';
 }
 
 function showDepositMessage(message, type){
@@ -1964,7 +1996,10 @@ function showDepositLockMessage(lockUntil){
   const remaining = Math.ceil((lockUntil - Date.now()) / 1000);
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
-  showDepositMessage(`آپ کی ڈپازٹ درخواستیں بار بار مسترد ہو چکی ہیں، براہِ کرم 30 منٹ بعد دوبارہ کوشش کریں۔<br><br>⏰ <span id="depositLockTimer">${minutes}:${seconds.toString().padStart(2,'0')}</span>`, 'error');
+  showDepositMessage(
+    `آپ کی ڈپازٹ درخواستیں بار بار مسترد ہو چکی ہیں، براہِ کرم 30 منٹ بعد دوبارہ کوشش کریں۔<br><br>⏰ <span id="depositLockTimer">${minutes}:${seconds.toString().padStart(2,'0')}</span>`,
+    'error'
+  );
 }
 
 function startDepositLockCountdown(lockUntil){
@@ -1995,11 +2030,27 @@ function openDepositModal(){
 async function submitDepositRequest(){
   playSound('click');
   const amount = parseInt(document.getElementById('depositAmount').value);
-  if(!amount || amount < 500){ playSound('error'); alert('Minimum deposit Rs 500'); return; }
   
+  if(!amount || amount < 500){
+    playSound('error');
+    alert('Minimum deposit Rs 500');
+    return;
+  }
+  
+  // Check lock
   const lockStatus = await checkDepositLock();
-  if(lockStatus.locked){ playSound('error'); alert(`Locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`); return; }
-  if(currentDepositRequest){ playSound('error'); alert('Already have active deposit'); return; }
+  if(lockStatus.locked){
+    playSound('error');
+    alert(`You are locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`);
+    return;
+  }
+  
+  // Check if already has pending
+  if(currentDepositRequest){
+    playSound('error');
+    alert('You already have a pending deposit request');
+    return;
+  }
   
   try {
     const request = {
@@ -2009,52 +2060,52 @@ async function submitDepositRequest(){
       amount: amount,
       paymentMethod: depositMethod === 'jazz' ? 'jazzcash' : 'easypaisa',
       status: 'pending',
-      step: 1,
       timestamp: Date.now()
     };
+    
     const ref = window.dbPush(window.dbRef(window.db, 'depositRequests'));
     await window.dbSet(ref, request);
+    
     playSound('success');
     closeModal('depositModal');
-  } catch(e){ console.error(e); playSound('error'); alert('Error: ' + e.message); }
-}
-
-async function confirmDeposit(){
-  playSound('click');
-  if(!currentDepositRequest) return;
-  if(!confirm('Confirm payment sent via ' + (currentDepositRequest.paymentMethod === 'jazzcash' ? 'JazzCash' : 'Easypaisa') + '?')) return;
-  try {
-    await window.dbUpdate(window.dbRef(window.db, `depositRequests/${currentDepositRequest.id}`), {
-      status: 'confirmed',
-      step: 2,
-      confirmedAt: Date.now()
-    });
-    playSound('success');
-  } catch(e){ console.error(e); playSound('error'); alert('Error: ' + e.message); }
+    
+  } catch(e){
+    console.error(e);
+    playSound('error');
+    alert('Error: ' + e.message);
+  }
 }
 
 async function retryDeposit(){
   playSound('click');
+  
+  // Check lock
   const lockStatus = await checkDepositLock();
-  if(lockStatus.locked){ playSound('error'); alert(`Locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`); return; }
-  if(currentDepositRequest){
-    try { await window.dbUpdate(window.dbRef(window.db, `depositRequests/${currentDepositRequest.id}`), null); } catch(e){}
+  if(lockStatus.locked){
+    playSound('error');
+    alert(`You are locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`);
+    return;
   }
+  
+  // Clear rejection message
+  document.getElementById('depositStatusMessages').style.display = 'none';
+  
+  // Open new deposit
   openDepositModal();
 }
 
 function showDepositStatus(){
   playSound('click');
-  if(!currentDepositRequest){ alert('No active deposit'); return; }
-  const status = currentDepositRequest.status;
-  const step = currentDepositRequest.step;
+  if(!currentDepositRequest){
+    alert('No active deposit request');
+    return;
+  }
+  
   const amount = currentDepositRequest.amount;
   const method = currentDepositRequest.paymentMethod === 'jazzcash' ? 'JazzCash' : 'Easypaisa';
   const date = new Date(currentDepositRequest.timestamp).toLocaleString();
-  let message = `Deposit Request\n\nAmount: Rs ${amount}\nMethod: ${method}\nDate: ${date}\n\n`;
-  if(status === 'pending' && step === 1) message += `Status: Pending (Step 1)\nWaiting for admin approval...`;
-  else if(status === 'confirmed' && step === 2) message += `Status: Confirmed (Step 2)\nWaiting for final approval...`;
-  alert(message);
+  
+  alert(`Deposit Request\n\nAmount: Rs ${amount}\nMethod: ${method}\nDate: ${date}\n\nStatus: Pending\nWaiting for admin approval...`);
 }
 
 
