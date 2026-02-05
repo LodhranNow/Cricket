@@ -3,35 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mines Game</title>
+<title>Admin – Mines Game</title>
+
+<!-- Firebase Compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
 /* ═══════════════════════════════════════════════
-   CSS VARIABLES & RESET
+   VARIABLES & RESET
    ═══════════════════════════════════════════════ */
 :root {
   --gold:          #f0c040;
-  --gold-dim:      #c89a28;
   --neon-cyan:     #22d3ee;
   --neon-emerald:  #34d399;
   --neon-amber:    #fbbf24;
   --neon-rose:     #fb7185;
   --neon-blue:     #60a5fa;
+  --neon-purple:   #a78bfa;
   --bg-deep:       #0a0c14;
-  --glass-bg:      rgba(18, 22, 40, 0.65);
+  --glass-bg:      rgba(18, 22, 40, 0.85);
   --glass-border:  rgba(255,255,255,0.11);
-  --glass-border2: rgba(255,255,255,0.22);
+  --glass-border2: rgba(255,255,255,0.20);
   --text-primary:  #f0f0f5;
   --text-muted:    #9aa0b8;
   --radius:        16px;
   --radius-sm:     10px;
-  --blur-main:     24px;
-  --blur-modal:    30px;
-  --blur-tile:     6px;
+  --blur-main:     22px;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
 html, body {
-  height:100%; min-height:100vh;
+  min-height:100vh;
   font-family:'Rajdhani', sans-serif;
   background: var(--bg-deep);
   color: var(--text-primary);
@@ -39,577 +44,461 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ═══════════════════════════════════════════════
-   CANVAS BG
-   ═══════════════════════════════════════════════ */
+/* ─── Canvas BG ─── */
 #bgCanvas {
   position:fixed; top:0; left:0;
   width:100%; height:100%;
   z-index:0; pointer-events:none;
 }
-
-/* noise grain */
 body::before {
   content:'';
   position:fixed; inset:0; z-index:1;
-  pointer-events:none; opacity:.04;
+  pointer-events:none; opacity:.035;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size:200px 200px;
 }
 
 /* ═══════════════════════════════════════════════
-   PAGE LAYOUT
+   LOGIN SCREEN
    ═══════════════════════════════════════════════ */
-.page-wrap {
+.login-screen {
   position:relative; z-index:2;
-  min-height:100vh;
-  display:flex; justify-content:center;
-  align-items:flex-start;
-  padding:28px 16px 48px;
+  display:flex; justify-content:center; align-items:center;
+  min-height:100vh; padding:20px;
 }
-
-/* ═══════════════════════════════════════════════
-   GLASS CONTAINER
-   ═══════════════════════════════════════════════ */
-.container {
-  background: var(--glass-bg);
+.login-box {
+  background: rgba(18,22,40,0.78);
   backdrop-filter: blur(var(--blur-main)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--blur-main)) saturate(1.4);
-  border: 1.5px solid var(--glass-border);
+  border: 1.5px solid var(--glass-border2);
   border-radius: var(--radius);
-  box-shadow: 0 8px 40px rgba(0,0,0,.52),
-              inset 0 1px 0 rgba(255,255,255,.07);
-  max-width:480px; width:100%;
-  padding:28px 22px 32px;
-  margin-top:20px;
+  box-shadow: 0 8px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.07);
+  padding:44px 36px 40px;
+  max-width:380px; width:100%;
+  text-align:center;
 }
-.hidden { display:none !important; }
-
-/* ═══════════════════════════════════════════════
-   TITLE
-   ═══════════════════════════════════════════════ */
-.title {
+.login-title {
   font-family:'Orbitron', sans-serif;
-  font-size:50px; font-weight:900;
-  letter-spacing:13px; text-align:center;
-  margin-bottom:4px;
-  background: linear-gradient(135deg, #f0c040 0%, #fbbf24 45%, #f59e0b 75%, #f0c040 100%);
+  font-size:28px; font-weight:900;
+  letter-spacing:6px;
+  background: linear-gradient(135deg, #f0c040, #fbbf24, #f59e0b);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   background-clip:text;
-  filter: drop-shadow(0 0 20px rgba(240,192,64,.42));
-  text-transform:uppercase;
+  filter: drop-shadow(0 0 16px rgba(240,192,64,.4));
+  margin-bottom:6px;
 }
-.subtitle {
-  font-size:14px; color:var(--text-muted);
-  text-align:center; margin-bottom:24px;
-  letter-spacing:2px; direction:rtl; font-weight:500;
+.login-sub {
+  font-size:13px; color:var(--text-muted);
+  letter-spacing:2px; margin-bottom:28px;
 }
-
-/* ═══════════════════════════════════════════════
-   USER INFO
-   ═══════════════════════════════════════════════ */
-.user-info {
-  background: rgba(12,15,26,0.68);
-  backdrop-filter: blur(10px);
-  border: 1.5px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  padding:12px 16px; margin-bottom:14px;
-  display:flex; justify-content:space-between;
-  align-items:center; gap:10px;
-}
-.user-name {
-  font-family:'Orbitron', sans-serif;
-  font-size:13px; font-weight:700;
-  color:var(--gold); letter-spacing:1px; margin-bottom:2px;
-  text-shadow: 0 0 8px rgba(240,192,64,.25);
-}
-.user-phone { font-size:13px; color:var(--text-muted); }
-
-/* ═══════════════════════════════════════════════
-   INPUTS
-   ═══════════════════════════════════════════════ */
-input {
-  width:100%; padding:14px 16px; margin:8px 0;
+.login-input {
+  width:100%; padding:14px 18px; margin:10px 0;
   background: rgba(12,15,26,0.78);
   border: 1.5px solid var(--glass-border2);
   border-radius: var(--radius-sm);
   font-family:'Rajdhani', sans-serif;
-  font-size:16px; font-weight:500;
-  color:var(--text-primary); outline:none;
+  font-size:17px; font-weight:500;
+  color: var(--text-primary); outline:none;
   transition: border-color .25s, box-shadow .25s;
 }
-input::placeholder { color:var(--text-muted); }
-input:focus {
+.login-input::placeholder { color:var(--text-muted); }
+.login-input:focus {
   border-color: var(--neon-cyan);
   box-shadow: 0 0 14px rgba(34,211,238,.25);
 }
-
-/* ═══════════════════════════════════════════════
-   BUTTONS
-   ═══════════════════════════════════════════════ */
-button {
-  width:100%; padding:15px 18px; margin:7px 0;
-  border-radius: var(--radius-sm);
-  font-family:'Rajdhani', sans-serif;
-  font-size:17px; font-weight:700;
-  letter-spacing:1.2px; cursor:pointer;
-  border:none; position:relative; overflow:hidden;
-  transition: transform .18s, box-shadow .25s, background .22s;
-  text-transform:uppercase;
-}
-button:hover:not(:disabled) { transform:translateY(-2px); }
-button:active:not(:disabled) { transform:translateY(0); }
-button:disabled { opacity:.38; cursor:not-allowed; }
-
-.btn-green {
+.login-btn {
+  width:100%; padding:15px; margin-top:14px;
   background: rgba(52,211,153,.18);
   border: 1.5px solid rgba(52,211,153,.55);
-  color: var(--neon-emerald);
-  box-shadow: 0 0 12px rgba(52,211,153,.18), inset 0 1px 0 rgba(52,211,153,.14);
+  border-radius: var(--radius-sm);
+  font-family:'Rajdhani', sans-serif;
+  font-size:18px; font-weight:700;
+  letter-spacing:2px; color: var(--neon-emerald);
+  cursor:pointer; text-transform:uppercase;
+  box-shadow: 0 0 14px rgba(52,211,153,.18);
+  transition: transform .18s, box-shadow .25s, background .22s;
 }
-.btn-green:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(52,211,153,.4);
-  background: rgba(52,211,153,.26);
-}
-.btn-green:active:not(:disabled) { background: rgba(52,211,153,.34); }
+.login-btn:hover { transform:translateY(-2px); box-shadow:0 0 26px rgba(52,211,153,.4); background:rgba(52,211,153,.28); }
+.login-btn:active { transform:translateY(0); }
 
-.btn-orange {
-  background: rgba(251,191,36,.15);
-  border: 1.5px solid rgba(251,191,36,.5);
-  color: var(--neon-amber);
-  box-shadow: 0 0 12px rgba(251,191,36,.15);
+/* ═══════════════════════════════════════════════
+   DASHBOARD
+   ═══════════════════════════════════════════════ */
+.dashboard {
+  position:relative; z-index:2;
+  display:none;
+  max-width:1200px; margin:0 auto;
+  padding:22px 18px 48px;
 }
-.btn-orange:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(251,191,36,.35);
-  background: rgba(251,191,36,.24);
-}
-.btn-orange:active:not(:disabled) { background: rgba(251,191,36,.32); }
+.dashboard.active { display:block; }
 
-.btn-blue {
-  background: rgba(96,165,250,.17);
-  border: 1.5px solid rgba(96,165,250,.5);
-  color: var(--neon-blue);
-  box-shadow: 0 0 12px rgba(96,165,250,.15);
+/* ─── Header ─── */
+.dash-header {
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:12px;
+  margin-bottom:22px;
 }
-.btn-blue:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(96,165,250,.35);
-  background: rgba(96,165,250,.26);
+.dash-title {
+  font-family:'Orbitron', sans-serif;
+  font-size:24px; font-weight:900;
+  letter-spacing:5px;
+  background: linear-gradient(135deg, #f0c040, #fbbf24);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter: drop-shadow(0 0 12px rgba(240,192,64,.35));
 }
-.btn-blue:active:not(:disabled) { background: rgba(96,165,250,.34); }
-
-.btn-red {
+.dash-logout {
+  padding:10px 22px; border-radius: var(--radius-sm);
   background: rgba(251,113,133,.15);
   border: 1.5px solid rgba(251,113,133,.5);
   color: var(--neon-rose);
-  box-shadow: 0 0 12px rgba(251,113,133,.15);
-}
-.btn-red:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(251,113,133,.35);
-  background: rgba(251,113,133,.26);
-}
-.btn-red:active:not(:disabled) { background: rgba(251,113,133,.34); }
-
-.btn-gold {
-  background: linear-gradient(135deg, rgba(240,192,64,.27), rgba(251,191,36,.2));
-  border: 1.5px solid rgba(240,192,64,.55);
-  color: var(--gold);
-  box-shadow: 0 0 14px rgba(240,192,64,.22);
-}
-.btn-gold:hover:not(:disabled) {
-  box-shadow: 0 0 28px rgba(240,192,64,.44);
-  background: linear-gradient(135deg, rgba(240,192,64,.36), rgba(251,191,36,.28));
-}
-.btn-gold:active:not(:disabled) {
-  background: linear-gradient(135deg, rgba(240,192,64,.44), rgba(251,191,36,.36));
-}
-
-.btn-reset {
-  background: rgba(96,165,250,.15);
-  border: 1.5px solid rgba(96,165,250,.45);
-  color: var(--neon-blue);
-  box-shadow: 0 0 12px rgba(96,165,250,.13);
-}
-.btn-reset:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(96,165,250,.33);
-  background: rgba(96,165,250,.24);
-}
-.btn-reset:active:not(:disabled) { background: rgba(96,165,250,.32); }
-
-.logout-btn {
-  width:auto; padding:9px 18px; margin:0;
-  background: rgba(251,113,133,.14);
-  border: 1.5px solid rgba(251,113,133,.45);
-  color: var(--neon-rose);
-  border-radius: var(--radius-sm);
   font-family:'Rajdhani', sans-serif;
-  font-size:14px; font-weight:600;
+  font-size:15px; font-weight:700;
   letter-spacing:1px; cursor:pointer;
-  transition: background .2s, box-shadow .2s;
   text-transform:uppercase;
+  transition: background .2s, box-shadow .2s;
 }
-.logout-btn:hover {
-  background: rgba(251,113,133,.24);
-  box-shadow: 0 0 18px rgba(251,113,133,.3);
-}
-.logout-btn:active { background: rgba(251,113,133,.32); }
+.dash-logout:hover { background:rgba(251,113,133,.26); box-shadow:0 0 18px rgba(251,113,133,.3); }
 
 /* ═══════════════════════════════════════════════
-   BALANCE BAR
+   STAT CARDS
    ═══════════════════════════════════════════════ */
-.balance-section {
-  display:flex; justify-content:space-around; gap:12px;
-  background: rgba(8,10,18,0.65);
-  backdrop-filter: blur(12px);
-  border: 1.5px solid var(--glass-border);
+.stats-row {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap:14px; margin-bottom:22px;
+}
+.stat-card {
+  background: rgba(18,22,40,0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid var(--glass-border2);
   border-radius: var(--radius);
-  padding:16px 12px; margin:16px 0;
+  box-shadow: 0 6px 28px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+  padding:20px 16px; text-align:center;
+  position:relative; overflow:hidden;
 }
-.balance-item { text-align:center; flex:1; }
-.balance-label {
+.stat-card::before {
+  content:'';
+  position:absolute; top:0; left:10%; right:10%; height:2px;
+  background: var(--card-glow, var(--neon-cyan));
+  filter: blur(3px);
+  opacity:.7;
+}
+.stat-card[data-color="cyan"]   { --card-glow: var(--neon-cyan); }
+.stat-card[data-color="emerald"]{ --card-glow: var(--neon-emerald); }
+.stat-card[data-color="amber"]  { --card-glow: var(--neon-amber); }
+.stat-card[data-color="purple"] { --card-glow: var(--neon-purple); }
+
+.stat-label {
   font-size:11px; color:var(--text-muted);
-  letter-spacing:2.5px; text-transform:uppercase; margin-bottom:5px;
+  letter-spacing:2.2px; text-transform:uppercase; margin-bottom:8px;
 }
-.balance-value {
+.stat-value {
+  font-family:'Orbitron', sans-serif;
+  font-size:28px; font-weight:700;
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(240,192,64,.4);
+}
+
+/* ═══════════════════════════════════════════════
+   TABS
+   ═══════════════════════════════════════════════ */
+.tabs {
+  display:flex; gap:8px; margin-bottom:18px;
+  flex-wrap:wrap;
+}
+.tab {
+  padding:11px 22px; border-radius: var(--radius-sm);
+  background: rgba(18,22,40,0.65);
+  border: 1.5px solid var(--glass-border);
+  color: var(--text-muted);
+  font-family:'Rajdhani', sans-serif;
+  font-size:15px; font-weight:600;
+  letter-spacing:1px; cursor:pointer;
+  text-transform:uppercase;
+  transition: background .22s, border-color .22s, color .22s, box-shadow .25s;
+}
+.tab:hover { border-color: rgba(255,255,255,.25); color:var(--text-primary); }
+.tab.active {
+  background: rgba(240,192,64,.15);
+  border-color: rgba(240,192,64,.55);
+  color: var(--gold);
+  box-shadow: 0 0 16px rgba(240,192,64,.22);
+}
+
+/* ═══════════════════════════════════════════════
+   TAB CONTENT
+   ═══════════════════════════════════════════════ */
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+.tab-heading {
+  font-family:'Orbitron', sans-serif;
+  font-size:14px; font-weight:600;
+  letter-spacing:3px; color:var(--text-muted);
+  text-transform:uppercase;
+  margin-bottom:14px; padding-bottom:10px;
+  border-bottom:1px solid var(--glass-border);
+}
+
+/* ═══════════════════════════════════════════════
+   CARDS
+   ═══════════════════════════════════════════════ */
+.card {
+  background: rgba(14,18,32,0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 20px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.05);
+  padding:18px 18px 16px;
+  margin-bottom:12px;
+  transition: border-color .22s;
+}
+.card:hover { border-color: var(--glass-border2); }
+
+.card-header {
+  display:flex; justify-content:space-between;
+  align-items:flex-start; flex-wrap:wrap; gap:10px;
+  margin-bottom:10px;
+}
+.card-title {
+  font-family:'Orbitron', sans-serif;
+  font-size:14px; font-weight:700;
+  color:var(--text-primary); letter-spacing:1px;
+}
+.card-info {
+  font-size:14px; color:var(--text-muted);
+  margin:4px 0; line-height:1.5;
+}
+.card-amount {
   font-family:'Orbitron', sans-serif;
   font-size:22px; font-weight:700;
   color:var(--gold);
-  text-shadow: 0 0 10px rgba(240,192,64,.45);
+  text-shadow: 0 0 8px rgba(240,192,64,.35);
+  margin:8px 0;
 }
 
 /* ═══════════════════════════════════════════════
-   5×5 GAME GRID
+   ACTION BUTTONS
    ═══════════════════════════════════════════════ */
-.grid {
-  display:grid;
-  grid-template-columns: repeat(5,1fr);
-  gap:7px; margin:18px 0;
+.btn-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.btn-action {
+  padding:9px 18px; border-radius: var(--radius-sm);
+  font-family:'Rajdhani', sans-serif;
+  font-size:14px; font-weight:700;
+  letter-spacing:1px; cursor:pointer;
+  border:1.5px solid; text-transform:uppercase;
+  transition: transform .18s, box-shadow .25s, background .22s;
 }
-.tile {
-  aspect-ratio:1;
-  background: linear-gradient(150deg, rgba(28,34,56,0.82), rgba(18,22,40,0.94));
-  backdrop-filter: blur(var(--blur-tile));
-  border: 1.5px solid var(--glass-border2);
-  border-radius:13px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:26px; cursor:pointer;
-  transition: transform .22s cubic-bezier(.34,1.56,.64,1),
-              box-shadow .28s, background .25s, border-color .25s;
-  position:relative; overflow:hidden; user-select:none;
-}
-.tile::before {
-  content:'';
-  position:absolute; top:0; left:8%; right:8%; height:1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
-  pointer-events:none;
-}
-.tile:hover:not(.revealed) {
-  transform: scale(1.09);
-  border-color: rgba(34,211,238,.6);
-  box-shadow: 0 0 22px rgba(34,211,238,.32),
-              inset 0 0 14px rgba(34,211,238,.08);
-  background: linear-gradient(150deg, rgba(30,55,88,0.78), rgba(18,28,52,0.9));
-}
-.tile.revealed { cursor:default; }
+.btn-action:hover { transform:translateY(-1px); }
+.btn-action:active { transform:translateY(0); }
 
-.tile.safe {
-  background: linear-gradient(150deg, rgba(240,192,64,.32), rgba(251,191,36,.16));
-  border-color: rgba(240,192,64,.65);
-  box-shadow: 0 0 18px rgba(240,192,64,.36),
-              inset 0 0 10px rgba(240,192,64,.1);
-  animation: tileIn .28s cubic-bezier(.34,1.56,.64,1);
+.btn-approve {
+  color:var(--neon-emerald);
+  background:rgba(52,211,153,.16);
+  border-color:rgba(52,211,153,.5);
+  box-shadow:0 0 10px rgba(52,211,153,.15);
 }
-.tile.mine {
-  background: linear-gradient(150deg, rgba(251,113,133,.34), rgba(220,20,60,.18));
-  border-color: rgba(251,113,133,.7);
-  box-shadow: 0 0 20px rgba(251,60,80,.42),
-              inset 0 0 12px rgba(251,60,80,.12);
-  animation: tileIn .28s cubic-bezier(.34,1.56,.64,1);
-}
-.tile.mine-hit {
-  animation: mineFlash .5s ease-out forwards;
-}
+.btn-approve:hover { box-shadow:0 0 20px rgba(52,211,153,.35); background:rgba(52,211,153,.24); }
 
-@keyframes tileIn {
-  0%   { transform:scale(.85); opacity:.6; }
-  100% { transform:scale(1);   opacity:1;  }
+.btn-reject {
+  color:var(--neon-rose);
+  background:rgba(251,113,133,.15);
+  border-color:rgba(251,113,133,.5);
+  box-shadow:0 0 10px rgba(251,113,133,.15);
 }
-@keyframes mineFlash {
-  0%   { box-shadow: 0 0 52px rgba(251,60,80,1); transform:scale(1.12); }
-  60%  { box-shadow: 0 0 28px rgba(251,60,80,.6); transform:scale(1);   }
-  100% { box-shadow: 0 0 20px rgba(251,60,80,.42); transform:scale(1);  }
+.btn-reject:hover { box-shadow:0 0 20px rgba(251,113,133,.35); background:rgba(251,113,133,.24); }
+
+.btn-delete {
+  color:var(--neon-amber);
+  background:rgba(251,191,36,.13);
+  border-color:rgba(251,191,36,.45);
+  box-shadow:0 0 10px rgba(251,191,36,.13);
 }
+.btn-delete:hover { box-shadow:0 0 20px rgba(251,191,36,.3); background:rgba(251,191,36,.22); }
+
+.btn-edit {
+  color:var(--neon-blue);
+  background:rgba(96,165,250,.15);
+  border-color:rgba(96,165,250,.48);
+  box-shadow:0 0 10px rgba(96,165,250,.13);
+}
+.btn-edit:hover { box-shadow:0 0 20px rgba(96,165,250,.32); background:rgba(96,165,250,.24); }
+
+.btn-kick {
+  color:var(--neon-purple);
+  background:rgba(167,139,250,.14);
+  border-color:rgba(167,139,250,.48);
+  box-shadow:0 0 10px rgba(167,139,250,.13);
+}
+.btn-kick:hover { box-shadow:0 0 20px rgba(167,139,250,.32); background:rgba(167,139,250,.24); }
 
 /* ═══════════════════════════════════════════════
-   MESSAGES
+   STATUS BADGES
    ═══════════════════════════════════════════════ */
-.msg {
-  padding:12px 16px; margin:12px 0;
-  border-radius: var(--radius-sm);
-  text-align:center; font-weight:600;
-  font-size:15px; display:none;
-  letter-spacing:.5px;
-  backdrop-filter: blur(8px);
+.badge {
+  display:inline-block;
+  font-size:11px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase;
+  padding:4px 10px; border-radius:20px;
 }
-.msg.success {
-  background: rgba(52,211,153,.16);
-  border: 1.5px solid rgba(52,211,153,.45);
+.badge-online {
   color: var(--neon-emerald);
-  text-shadow: 0 0 6px rgba(52,211,153,.3);
+  background: rgba(52,211,153,.14);
+  border: 1px solid rgba(52,211,153,.4);
+  box-shadow: 0 0 6px rgba(52,211,153,.18);
 }
-.msg.error {
-  background: rgba(251,113,133,.16);
-  border: 1.5px solid rgba(251,113,133,.45);
-  color: var(--neon-rose);
-  text-shadow: 0 0 6px rgba(251,113,133,.3);
-}
-.timer-msg {
-  background: rgba(251,191,36,.14);
-  border: 1.5px solid rgba(251,191,36,.4);
-  color: var(--neon-amber);
-  padding:10px 14px; border-radius: var(--radius-sm);
-  margin:8px 0; text-align:center;
-  font-size:14px; font-weight:500;
-}
-
-/* ═══════════════════════════════════════════════
-   REQUEST TOGGLE (For Both Deposit/Withdraw)
-   ═══════════════════════════════════════════════ */
-.request-toggle {
-  display:flex; gap:0; margin:14px 0 10px;
-  background: rgba(8,10,18,0.6);
-  border: 1.5px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  overflow:hidden;
-}
-.request-toggle button {
-  flex:1; margin:0; border-radius:0;
-  padding:12px 8px; font-size:15px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+.badge-offline {
   color: var(--text-muted);
-  transition: background .22s, color .22s, box-shadow .22s;
-  text-transform:uppercase;
-  letter-spacing:1px;
+  background: rgba(150,150,150,.1);
+  border: 1px solid rgba(150,150,150,.2);
 }
-.request-toggle button:hover:not(:disabled) { transform:none; }
-.request-toggle button.active-tab {
-  background: rgba(52,211,153,.18);
-  color: var(--neon-emerald);
-  box-shadow: inset 0 0 12px rgba(52,211,153,.1);
-}
-.request-toggle button.active-tab.easy-active {
-  background: rgba(251,191,36,.16);
+.badge-pending {
   color: var(--neon-amber);
-  box-shadow: inset 0 0 12px rgba(251,191,36,.1);
+  background: rgba(251,191,36,.12);
+  border: 1px solid rgba(251,191,36,.4);
+  box-shadow: 0 0 6px rgba(251,191,36,.15);
 }
-.request-toggle button + button {
-  border-left: 1px solid var(--glass-border);
-}
-
-/* ═══════════════════════════════════════════════
-   PAYMENT NUMBER DISPLAY
-   ═══════════════════════════════════════════════ */
-.payment-number-display {
-  background: rgba(8,10,18,0.65);
-  border: 1.5px solid rgba(240,192,64,0.3);
-  border-radius: 8px;
-  padding: 16px;
-  margin: 12px 0;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.payment-number-display:hover {
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 20px rgba(34,211,238,0.2);
-}
-.payment-number-display .number {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--gold);
-  letter-spacing: 2px;
-  margin: 8px 0;
-  text-shadow: 0 0 8px rgba(240,192,64,0.3);
-}
-.payment-number-display .urdu-msg {
-  font-size: 14px;
+.badge-approved {
   color: var(--neon-emerald);
-  direction: rtl;
-  margin-top: 8px;
+  background: rgba(52,211,153,.14);
+  border: 1px solid rgba(52,211,153,.4);
 }
-.payment-number-display.copied {
-  border-color: var(--neon-emerald);
-  background: rgba(52,211,153,0.1);
-}
-
-/* ═══════════════════════════════════════════════
-   DEPOSIT/WITHDRAW STATUS BUTTONS
-   ═══════════════════════════════════════════════ */
-.btn-row {
-  display:flex; gap:8px; margin:12px 0;
-}
-.btn-row button {
-  flex:1; margin:0;
+.badge-rejected {
+  color: var(--neon-rose);
+  background: rgba(251,113,133,.14);
+  border: 1px solid rgba(251,113,133,.4);
 }
 
 /* ═══════════════════════════════════════════════
-   MODALS
+   MODAL
    ═══════════════════════════════════════════════ */
-.modal {
+.modal-overlay {
   display:none; position:fixed; inset:0;
-  background: rgba(4,5,10,0.74);
+  background: rgba(4,5,10,0.78);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   z-index:1000;
   justify-content:center; align-items:center;
   padding:20px;
 }
-.modal.active { display:flex; }
+.modal-overlay.active { display:flex; }
 
-.modal-content {
-  background: rgba(14,17,30,0.82);
-  backdrop-filter: blur(var(--blur-modal)) saturate(1.35);
-  -webkit-backdrop-filter: blur(var(--blur-modal)) saturate(1.35);
+.modal-box {
+  background: rgba(14,18,32,0.88);
+  backdrop-filter: blur(28px) saturate(1.3);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3);
   border: 1.5px solid var(--glass-border2);
-  box-shadow: 0 14px 52px rgba(0,0,0,.58),
-              inset 0 1px 0 rgba(255,255,255,.08);
-  padding:28px 24px;
+  box-shadow: 0 14px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.07);
+  padding:32px 28px;
   border-radius: var(--radius);
-  max-width:420px; width:100%;
-  max-height:90vh; overflow-y:auto;
+  max-width:500px; width:100%;
 }
 .modal-title {
   font-family:'Orbitron', sans-serif;
-  font-size:19px; font-weight:700;
-  color:var(--gold); margin-bottom:18px;
-  text-align:center; letter-spacing:2px;
+  font-size:18px; font-weight:700;
+  color:var(--gold); text-align:center;
+  letter-spacing:2px; margin-bottom:22px;
   text-shadow: 0 0 12px rgba(240,192,64,.35);
 }
+.modal-input {
+  width:100%; padding:14px 16px; margin:18px 0 10px;
+  background: rgba(12,15,26,0.78);
+  border: 1.5px solid var(--glass-border2);
+  border-radius: var(--radius-sm);
+  font-family:'Rajdhani', sans-serif;
+  font-size:18px; font-weight:600;
+  color:var(--text-primary); outline:none;
+  transition: border-color .25s, box-shadow .25s;
+}
+.modal-input:focus {
+  border-color:var(--neon-cyan);
+  box-shadow:0 0 14px rgba(34,211,238,.25);
+}
+.modal-btns { display:flex; gap:10px; margin-top:8px; }
+.modal-btns .btn-action { flex:1; text-align:center; }
 
-/* ═══════════════════════════════════════════════
-   KICKED OVERLAY
-   ═══════════════════════════════════════════════ */
-.kicked-overlay {
-  display:none; position:fixed; inset:0;
-  background: rgba(3,4,8,0.95);
-  backdrop-filter: blur(14px);
-  z-index:9999;
-  justify-content:center; align-items:center;
-}
-.kicked-overlay.active { display:flex; }
-
-.kicked-box {
-  background: rgba(14,17,30,0.9);
-  backdrop-filter: blur(22px);
-  border: 1.5px solid rgba(251,113,133,.35);
-  box-shadow: 0 0 44px rgba(251,113,133,.18),
-              0 14px 52px rgba(0,0,0,.58);
-  padding:46px 36px; border-radius: var(--radius);
-  text-align:center; max-width:360px; width:90%;
-}
-.kicked-box h2 {
-  font-family:'Orbitron', sans-serif;
-  color:var(--neon-rose); font-size:22px;
-  margin-bottom:14px; letter-spacing:2px;
-  text-shadow: 0 0 14px rgba(251,113,133,.5);
-}
-.kicked-box p {
-  color:var(--text-muted); margin-bottom:22px;
-  font-size:15px; line-height:1.55;
-}
-
-/* ═══════════════════════════════════════════════
-   ADMIN MESSAGE NOTIFICATION
-   ═══════════════════════════════════════════════ */
-.admin-message {
-  display: none;
-  background: rgba(251, 113, 133, 0.1);
-  border: 1.5px solid rgba(251, 113, 133, 0.4);
+/* ─── Reject Modal ─── */
+.reject-reason-box {
+  background: rgba(251,113,133,0.1);
+  border: 1.5px solid rgba(251,113,133,0.3);
   border-radius: var(--radius-sm);
   padding: 16px;
-  margin: 12px 0;
-  text-align: center;
-  animation: fadeIn 0.5s ease;
+  margin: 16px 0;
 }
-.admin-message.active {
-  display: block;
-}
-.admin-message-title {
+.reason-title {
   color: var(--neon-rose);
   font-family: 'Orbitron', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   margin-bottom: 8px;
   letter-spacing: 1px;
 }
-.admin-message-text {
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 10px;
-  direction: rtl;
+.reason-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
 }
-.admin-message-timestamp {
-  color: var(--text-muted);
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ═══════════════════════════════════════════════
-   LOCK STATUS DISPLAY
-   ═══════════════════════════════════════════════ */
-.lock-status {
-  display: none;
-  background: rgba(251, 113, 133, 0.1);
-  border: 1.5px solid rgba(251, 113, 133, 0.4);
+.reason-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.05);
   border-radius: var(--radius-sm);
-  padding: 16px;
-  margin: 12px 0;
-  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.lock-status.active {
-  display: block;
+.reason-option:hover {
+  background: rgba(251,113,133,0.15);
 }
-.lock-timer {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--neon-rose);
-  margin: 10px 0;
-  letter-spacing: 2px;
+.reason-option input[type="radio"] {
+  width: 16px;
+  height: 16px;
 }
-.lock-reason {
-  color: var(--text-muted);
+.reason-text {
   font-size: 14px;
-  margin-bottom: 8px;
-  direction: rtl;
+  color: var(--text-primary);
+}
+.custom-reason-input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(12,15,26,0.6);
+  border: 1.5px solid rgba(251,113,133,0.3);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  margin-top: 8px;
+  display: none;
+}
+.custom-reason-input.active {
+  display: block;
 }
 
 /* ═══════════════════════════════════════════════
    SCROLLBAR
    ═══════════════════════════════════════════════ */
-::-webkit-scrollbar       { width:6px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(255,255,255,.14); border-radius:3px; }
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-track { background:rgba(255,255,255,0.05); border-radius:4px; }
+::-webkit-scrollbar-thumb { background:rgba(240,192,64,0.3); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(240,192,64,0.5); }
 
 /* ═══════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════ */
-@media(max-width:420px){
-  .container      { padding:20px 14px 26px; }
-  .title          { font-size:36px; letter-spacing:7px; }
-  .balance-value  { font-size:18px; }
-  .tile           { font-size:22px; }
-  .modal-content  { padding:22px 16px; }
-  .payment-number-display .number { font-size:17px; }
+@media(max-width:540px){
+  .dashboard      { padding:16px 12px 40px; }
+  .dash-title     { font-size:18px; letter-spacing:3px; }
+  .stat-value     { font-size:22px; }
+  .tab            { padding:9px 16px; font-size:13px; }
+  .card-amount    { font-size:19px; }
+  .modal-box      { padding:24px 18px; }
 }
 </style>
 </head>
@@ -618,245 +507,288 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 <!-- ═══ PARTICLE CANVAS ═══ -->
 <canvas id="bgCanvas"></canvas>
 
-<div class="page-wrap">
-
-<!-- ═══ KICKED OVERLAY ═══ -->
-<div id="kickedOverlay" class="kicked-overlay">
-  <div class="kicked-box">
-    <div style="font-size:50px; margin-bottom:12px;">🚫</div>
-    <h2>SESSION TERMINATED</h2>
+<!-- ═══════════════════════════════════════════════
+     LOGIN
+     ═══════════════════════════════════════════════ -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-title">ADMIN</div>
+    <div class="login-sub">🔐 SECURE ACCESS</div>
+    <input type="password" id="adminPassword" class="login-input"
+           placeholder="Enter Password"
+           onkeydown="if(event.key==='Enter') adminLogin()">
+    <button class="login-btn" onclick="adminLogin()">Login</button>
   </div>
 </div>
 
-<!-- ═══ LOGIN SCREEN ═══ -->
-<div id="loginScreen" class="container">
-  <div class="title">MINES</div>
-  <div class="subtitle">اپنا نام اور نمبر لکھیں</div>
-  <div id="loginMsg" class="msg"></div>
-  <input type="text"  id="loginName"  placeholder="Your Name"   maxlength="50">
-  <input type="tel"   id="loginPhone" placeholder="03XXXXXXXXX" maxlength="11">
-  <button class="btn-green" onclick="handleLogin()">LOGIN / لاگ ان</button>
-</div>
+<!-- ═══════════════════════════════════════════════
+     DASHBOARD
+     ═══════════════════════════════════════════════ -->
+<div id="dashboard" class="dashboard">
 
-<!-- ═══ GAME SCREEN ═══ -->
-<div id="gameScreen" class="container hidden">
-  <div class="user-info">
-    <div>
-      <div class="user-name"  id="displayName"></div>
-      <div class="user-phone" id="displayPhone"></div>
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="dash-title">🎮 ADMIN DASHBOARD</div>
+    <button class="dash-logout" onclick="adminLogout()">Logout</button>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="stats-row">
+    <div class="stat-card" data-color="cyan">
+      <div class="stat-label">Total Users</div>
+      <div class="stat-value" id="totalUsers">0</div>
     </div>
-    <button class="logout-btn" onclick="handleLogout()">Logout</button>
-  </div>
-
-  <div class="title">MINES</div>
-  <div id="gameMsg" class="msg"></div>
-
-  <!-- Admin Message Notification -->
-  <div id="adminMessage" class="admin-message">
-    <div class="admin-message-title">📢 Admin Message</div>
-    <div class="admin-message-text" id="adminMessageText"></div>
-    <div class="admin-message-timestamp" id="adminMessageTime"></div>
-  </div>
-
-  <!-- Deposit Lock Status -->
-  <div id="depositLockStatus" class="lock-status">
-    <div style="color:var(--neon-rose); font-weight:600; margin-bottom:6px;">🔒 Deposit Locked</div>
-    <div class="lock-reason" id="lockReason">Your deposit requests have been rejected 3 times.</div>
-    <div class="lock-timer" id="lockTimer">00:00</div>
-    <div style="font-size:13px; color:var(--text-muted);">You can deposit again after timer ends</div>
-  </div>
-
-  <!-- Pending Deposit Status -->
-  <div id="pendingDepositStatus" class="msg success" style="display:none;">
-    ⏳ Deposit Request Pending - Waiting for admin approval
-  </div>
-
-  <!-- Deposit/Withdraw Button Row -->
-  <div class="btn-row">
-    <button class="btn-green" id="depositBtn" onclick="openDepositModal()">DEPOSIT</button>
-    <button class="btn-orange" id="withdrawBtn" onclick="openWithdrawModal()">WITHDRAW</button>
-  </div>
-
-  <div class="balance-section">
-    <div class="balance-item">
-      <div class="balance-label">Balance</div>
-      <div class="balance-value">Rs <span id="balance">0</span></div>
+    <div class="stat-card" data-color="emerald">
+      <div class="stat-label">Online Now</div>
+      <div class="stat-value" id="onlineUsers">0</div>
     </div>
-    <div class="balance-item">
-      <div class="balance-label">Current Win</div>
-      <div class="balance-value">Rs <span id="win">0</span></div>
+    <div class="stat-card" data-color="amber">
+      <div class="stat-label">Pending Deposits</div>
+      <div class="stat-value" id="pendingDeposits">0</div>
+    </div>
+    <div class="stat-card" data-color="purple">
+      <div class="stat-label">Pending Withdrawals</div>
+      <div class="stat-value" id="pendingWithdrawals">0</div>
     </div>
   </div>
 
-  <div class="grid" id="gameGrid"></div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('deposits',this)">💰 Deposits</button>
+    <button class="tab"        onclick="showTab('withdrawals',this)">💸 Withdrawals</button>
+    <button class="tab"        onclick="showTab('users',this)">👥 Users</button>
+    <button class="tab"        onclick="showTab('lockedUsers',this)">🔒 Locked Users</button>
+  </div>
 
-  <button class="btn-blue"  onclick="openBetModal()">Bet Rs <span id="betDisplay">0</span></button>
-  <button class="btn-red"   onclick="openMinesModal()">💣 Mines: <span id="minesDisplay">3</span></button>
-  <button class="btn-gold"  id="cashoutBtn" onclick="cashout()" disabled>Cash Out</button>
-  <button class="btn-reset" onclick="resetGame()">🔄 Reset</button>
+  <!-- ── DEPOSITS TAB ── -->
+  <div id="deposits" class="tab-content active">
+    <div class="tab-heading">Deposit Requests - Pending Approval</div>
+    <div id="depositsContent"><div style="text-align:center; padding:40px; color:var(--text-muted);">Loading deposits...</div></div>
+  </div>
+
+  <!-- ── WITHDRAWALS TAB ── -->
+  <div id="withdrawals" class="tab-content">
+    <div class="tab-heading">Withdrawal Requests - Pending Approval</div>
+    <div id="withdrawalsContent"><div style="text-align:center; padding:40px; color:var(--text-muted);">Loading withdrawals...</div></div>
+  </div>
+
+  <!-- ── USERS TAB ── -->
+  <div id="users" class="tab-content">
+    <div class="tab-heading">All Users - Manage Accounts</div>
+    <div id="usersContent"><div style="text-align:center; padding:40px; color:var(--text-muted);">Loading users...</div></div>
+  </div>
+
+  <!-- ── LOCKED USERS TAB ── -->
+  <div id="lockedUsers" class="tab-content">
+    <div class="tab-heading">Locked Users - 3+ Rejected Deposits</div>
+    <div id="lockedUsersContent"><div style="text-align:center; padding:40px; color:var(--text-muted);">Loading locked users...</div></div>
+  </div>
 </div>
 
-</div><!-- /page-wrap -->
-
-<!-- ═══ DEPOSIT MODAL (Mirror of Withdraw Modal) ═══ -->
-<div id="depositModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title">Deposit Request</div>
+<!-- ═══ REJECT DEPOSIT MODAL ═══ -->
+<div id="rejectDepositModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">❌ Reject Deposit Request</div>
     
-    <!-- Payment Method Toggle -->
-    <div class="request-toggle">
-      <button id="depTabJazz" class="active-tab" onclick="switchDepositMethod('jazz')">JazzCash</button>
-      <button id="depTabEasy" onclick="switchDepositMethod('easy')">Easypaisa</button>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" id="rejectUserName">User Name</div>
+          <div class="card-info" id="rejectUserPhone">Phone: </div>
+          <div class="card-info" id="rejectAmount">Amount: Rs 0</div>
+        </div>
+      </div>
     </div>
     
-    <!-- Payment Number Display -->
-    <div class="payment-number-display" id="depositNumberDisplay" onclick="copyDepositNumber()">
-      <div class="number" id="depositNumber">03266916283</div>
-      <div class="urdu-msg">نمبر کاپی کر کے ادائیگی کریں۔</div>
+    <div class="reject-reason-box">
+      <div class="reason-title">Select Rejection Reason</div>
+      <div class="reason-options">
+        <label class="reason-option">
+          <input type="radio" name="rejectReason" value="amount_not_received" checked>
+          <span class="reason-text">Amount not received / Wrong amount</span>
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rejectReason" value="screenshot_missing">
+          <span class="reason-text">Payment screenshot missing</span>
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rejectReason" value="fake_screenshot">
+          <span class="reason-text">Fake/edited screenshot</span>
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rejectReason" value="payment_method_wrong">
+          <span class="reason-text">Wrong payment method used</span>
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rejectReason" value="custom">
+          <span class="reason-text">Other reason (custom)</span>
+        </label>
+      </div>
+      
+      <textarea id="customRejectReason" class="custom-reason-input" 
+                placeholder="Enter custom rejection reason..."></textarea>
     </div>
     
-    <!-- Amount Input -->
-    <input type="number" id="depositAmount" placeholder="Amount (Minimum Rs 500)" min="500">
-    
-    <!-- Submit Button -->
-    <button class="btn-orange" onclick="submitDeposit()">Submit Request</button>
-    <button class="btn-red" onclick="closeModal('depositModal')">Cancel</button>
+    <div class="modal-btns">
+      <button class="btn-action btn-reject" onclick="confirmRejectDeposit()">Reject & Send Message</button>
+      <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="closeModal('rejectDepositModal')">Cancel</button>
+    </div>
   </div>
 </div>
 
-<!-- ═══ WITHDRAW MODAL ═══ -->
-<div id="withdrawModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title">Withdraw Request</div>
+<!-- ═══ EDIT USER BALANCE MODAL ═══ -->
+<div id="editBalanceModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit User Balance</div>
     
-    <!-- Payment Method Toggle -->
-    <div class="request-toggle">
-      <button id="tabJazz" class="active-tab" onclick="switchWithdrawMethod('jazz')">JazzCash</button>
-      <button id="tabEasy" onclick="switchWithdrawMethod('easy')">Easypaisa</button>
+    <div style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span style="color:var(--text-muted);">User:</span>
+        <span style="color:var(--text-primary); font-weight:600;" id="editUserName">-</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span style="color:var(--text-muted);">Phone:</span>
+        <span style="color:var(--text-primary); font-weight:600;" id="editUserPhone">-</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span style="color:var(--text-muted);">Current Balance:</span>
+        <span style="color:var(--gold); font-weight:600;" id="editCurrentBalance">Rs 0</span>
+      </div>
     </div>
     
-    <!-- Phone Input -->
-    <input type="tel" id="withdrawPhone" placeholder="03XXXXXXXXX" maxlength="11">
+    <input type="number" id="editNewBalance" class="modal-input" placeholder="Enter new balance">
     
-    <!-- Amount Input -->
-    <input type="number" id="withdrawAmount" placeholder="Amount (Minimum Rs 1000)" min="1000">
+    <div class="modal-btns">
+      <button class="btn-action btn-approve" onclick="saveUserBalance()">Save Balance</button>
+      <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="closeModal('editBalanceModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SEND MESSAGE MODAL ═══ -->
+<div id="sendMessageModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">📢 Send Message to User</div>
     
-    <!-- Submit Button -->
-    <button class="btn-orange" onclick="submitWithdraw()">Submit Request</button>
-    <button class="btn-red" onclick="closeModal('withdrawModal')">Cancel</button>
+    <div style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span style="color:var(--text-muted);">To:</span>
+        <span style="color:var(--text-primary); font-weight:600;" id="msgUserName">-</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <span style="color:var(--text-muted);">Phone:</span>
+        <span style="color:var(--text-primary); font-weight:600;" id="msgUserPhone">-</span>
+      </div>
+    </div>
+    
+    <textarea id="adminMessageText" class="modal-input" style="height:120px; resize:none;" 
+              placeholder="Enter message for user..."></textarea>
+    
+    <div class="modal-btns">
+      <button class="btn-action btn-approve" onclick="sendAdminMessage()">Send Message</button>
+      <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="closeModal('sendMessageModal')">Cancel</button>
+    </div>
   </div>
 </div>
 
-<!-- ═══ BET MODAL ═══ -->
-<div id="betModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title">Set Bet Amount</div>
-    <input type="number" id="betInput" placeholder="Amount (Rs 100 – 10,000)" min="100" max="10000">
-    <button class="btn-blue" onclick="setBet()">Set Bet</button>
-    <button class="btn-red"  onclick="closeModal('betModal')">Cancel</button>
+<!-- ═══ BAN USER MODAL ═══ -->
+<div id="banUserModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">🚫 Ban User Permanently</div>
+    
+    <div style="margin-bottom:20px; text-align:center;">
+      <div style="font-size:50px; margin-bottom:10px;">⚠️</div>
+      <div style="color:var(--neon-rose); font-weight:700; margin-bottom:10px;" id="banUserName">User Name</div>
+      <div style="color:var(--text-muted); margin-bottom:15px;" id="banUserPhone">Phone: </div>
+      <div style="color:var(--text-muted); font-size:14px; line-height:1.5;">
+        This will permanently ban the user from:<br>
+        • Logging in on any device<br>
+        • Creating new accounts with this phone<br>
+        • Cannot be undone!
+      </div>
+    </div>
+    
+    <input type="text" id="banReason" class="modal-input" placeholder="Ban reason (optional)">
+    
+    <div class="modal-btns">
+      <button class="btn-action btn-reject" onclick="confirmBanUser()">Permanent Ban</button>
+      <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="closeModal('banUserModal')">Cancel</button>
+    </div>
   </div>
 </div>
 
-<!-- ═══ MINES MODAL ═══ -->
-<div id="minesModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title">💣 Set Mines Count</div>
-    <input type="number" id="minesInput" placeholder="Mines (1–24)" min="1" max="24" value="3">
-    <button class="btn-red"  onclick="setMines()">Set Mines</button>
-    <button class="btn-blue" onclick="closeModal('minesModal')">Cancel</button>
-  </div>
-</div>
-
-<!-- ═══ ADAPTIVE PERFORMANCE ═══ -->
-<script>
-(function(){
-  const cores  = navigator.hardwareConcurrency || 4;
-  const dpr    = window.devicePixelRatio || 1;
-  const w      = screen.width;
-  const isLow  = cores <= 2 || (dpr >= 3 && w < 400) || (w < 320);
-  window._perfTier = isLow ? 'low' : 'high';
-  if(isLow){
-    document.documentElement.style.setProperty('--blur-main',  '14px');
-    document.documentElement.style.setProperty('--blur-modal', '18px');
-    document.documentElement.style.setProperty('--blur-tile',  '3px');
-  }
-})();
-</script>
-
-<!-- ═══ BACKGROUND PARTICLE ENGINE ═══ -->
+<!-- ═══════════════════════════════════════════════
+     PARTICLE ENGINE
+     ═══════════════════════════════════════════════ -->
 <script>
 (function(){
   const canvas = document.getElementById('bgCanvas');
-  const ctx    = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   let W, H;
-  function resize(){
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
 
-  const isLow       = window._perfTier === 'low';
-  const PART_COUNT  = isLow ? 55  : 120;
-  const SHARD_COUNT = isLow ? 8   : 20;
-
+  const PART_COUNT = 90, SHARD_COUNT = 16;
   const PALETTE = [
-    [34,211,238],[96,165,250],[52,211,153],
-    [240,192,64],[251,191,36],[180,195,240],
+    [34,211,238], [96,165,250], [52,211,153],
+    [240,192,64], [251,191,36], [180,195,240]
   ];
 
   class Particle {
     constructor(){ this.reset(true); }
     reset(init){
-      this.x  = init ? Math.random()*W : (Math.random()<.5 ? -12 : W+12);
-      this.y  = init ? Math.random()*H : Math.random()*H;
-      this.r  = .5 + Math.random()*2.4;
+      this.x = init ? Math.random()*W : (Math.random()<.5 ? -12 : W+12);
+      this.y = init ? Math.random()*H : Math.random()*H;
+      this.r = .5 + Math.random()*2.4;
       this.vx = (Math.random()-.5)*.38;
       this.vy = (Math.random()-.5)*.38;
-      this.col   = PALETTE[Math.floor(Math.random()*PALETTE.length)];
+      this.col = PALETTE[Math.floor(Math.random()*PALETTE.length)];
       this.alpha = .12 + Math.random()*.5;
       this.phase = Math.random()*Math.PI*2;
-      this.freq  = .35 + Math.random()*.55;
+      this.freq = .35 + Math.random()*.55;
     }
     update(){
-      this.x+=this.vx; this.y+=this.vy; this.phase+=this.freq*.016;
-      if(this.x<-30||this.x>W+30||this.y<-30||this.y>H+30) this.reset(false);
+      this.x += this.vx;
+      this.y += this.vy;
+      this.phase += this.freq*.016;
+      if(this.x < -30 || this.x > W+30 || this.y < -30 || this.y > H+30) this.reset(false);
     }
     draw(){
       const a = this.alpha + Math.sin(this.phase)*.13;
       const [r,g,b] = this.col;
-      ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(${r},${g},${b},${a})`; ctx.fill();
-      if(!isLow){
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.r*3.5, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${a*.16})`; ctx.fill();
-      }
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+      ctx.fill();
     }
   }
 
   class Shard {
     constructor(){ this.reset(true); }
     reset(init){
-      this.x     = init ? Math.random()*W : -70;
-      this.y     = init ? Math.random()*H : Math.random()*H;
-      this.w     = 2.5 + Math.random()*4;
-      this.h     = 28 + Math.random()*75;
+      this.x = init ? Math.random()*W : -70;
+      this.y = init ? Math.random()*H : Math.random()*H;
+      this.w = 2.5 + Math.random()*4;
+      this.h = 28 + Math.random()*75;
       this.angle = -.52 + Math.random()*.25;
       this.speed = .28 + Math.random()*.32;
       this.alpha = .028 + Math.random()*.065;
-      this.col   = [195+Math.random()*60, 210+Math.random()*45, 255];
+      this.col = [195+Math.random()*60, 210+Math.random()*45, 255];
     }
-    update(){ this.x += this.speed; if(this.x > W+100) this.reset(false); }
+    update(){ 
+      this.x += this.speed; 
+      if(this.x > W+100) this.reset(false); 
+    }
     draw(){
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
       const g = ctx.createLinearGradient(0,0,0,this.h);
       const [r,gr,b] = this.col;
-      g.addColorStop(0,   `rgba(${r},${gr},${b},0)`);
+      g.addColorStop(0, `rgba(${r},${gr},${b},0)`);
       g.addColorStop(.28, `rgba(${r},${gr},${b},${this.alpha})`);
       g.addColorStop(.72, `rgba(${r},${gr},${b},${this.alpha})`);
-      g.addColorStop(1,   `rgba(${r},${gr},${b},0)`);
+      g.addColorStop(1, `rgba(${r},${gr},${b},0)`);
       ctx.fillStyle = g;
       ctx.fillRect(-this.w*.5, 0, this.w, this.h);
       ctx.restore();
@@ -869,1049 +801,1069 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 
   function drawBg(){
     const g = ctx.createLinearGradient(0,0, W*.55, H);
-    g.addColorStop(0,   '#0a0c14');
-    g.addColorStop(.4,  '#0e1320');
+    g.addColorStop(0, '#0a0c14');
+    g.addColorStop(.4, '#0e1320');
     g.addColorStop(.72, '#111a2e');
-    g.addColorStop(1,   '#0c1118');
+    g.addColorStop(1, '#0c1118');
     ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
-    if(!isLow){
-      [
-        { x:W*.12, y:H*.28, r:W*.24, c:'rgba(34,211,238,.032)' },
-        { x:W*.82, y:H*.68, r:W*.21, c:'rgba(96,165,250,.028)' },
-        { x:W*.48, y:H*.88, r:W*.19, c:'rgba(52,211,153,.022)' },
-        { x:W*.72, y:H*.12, r:W*.17, c:'rgba(240,192,64,.020)' },
-        { x:W*.25, y:H*.75, r:W*.15, c:'rgba(251,191,36,.018)' },
-      ].forEach(b=>{
-        const rg = ctx.createRadialGradient(b.x,b.y,0, b.x,b.y,b.r);
-        rg.addColorStop(0, b.c);
-        rg.addColorStop(1, 'transparent');
-        ctx.fillStyle = rg;
-        ctx.fillRect(0,0,W,H);
-      });
-    }
   }
 
   function loop(){
     drawBg();
-    shards.forEach(s=>{ s.update(); s.draw(); });
-    particles.forEach(p=>{ p.update(); p.draw(); });
+    shards.forEach(s => { s.update(); s.draw(); });
+    particles.forEach(p => { p.update(); p.draw(); });
     requestAnimationFrame(loop);
   }
   loop();
 })();
 </script>
 
-<!-- ═══ FIREBASE MODULE ═══ -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, get, update, onValue, push, serverTimestamp, remove }
-  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-
+<!-- ═══════════════════════════════════════════════
+     FIREBASE INIT
+     ═══════════════════════════════════════════════ -->
+<script>
+// Initialize Firebase
 const firebaseConfig = {
-  apiKey:"AIzaSyA8C1-TpsRo0UsATshlI8Dy0v40PnLRlc4",
-  authDomain:"mines-67d8c.firebaseapp.com",
-  databaseURL:"https://mines-67d8c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"mines-67d8c",
-  storageBucket:"mines-67d8c.firebasestorage.app",
-  messagingSenderId:"918317634273",
-  appId:"1:918317634273:web:8527c0d58a1f3de0371da0",
-  measurementId:"G-NHC6K1X3KZ"
+  apiKey: "AIzaSyA8C1-TpsRo0UsATshlI8Dy0v40PnLRlc4",
+  authDomain: "mines-67d8c.firebaseapp.com",
+  databaseURL: "https://mines-67d8c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mines-67d8c",
+  storageBucket: "mines-67d8c.firebasestorage.app",
+  messagingSenderId: "918317634273",
+  appId: "1:918317634273:web:8527c0d58a1f3de0371da0",
+  measurementId: "G-NHC6K1X3KZ"
 };
 
-const app      = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+let db = null;
 
-window.db               = database;
-window.dbRef            = ref;
-window.dbSet            = set;
-window.dbGet            = get;
-window.dbUpdate         = update;
-window.dbOnValue        = onValue;
-window.dbPush           = push;
-window.dbRemove         = remove;
-window.dbServerTimestamp = serverTimestamp;
+function initFirebase(){
+  try {
+    if(!firebase.apps.length){
+      firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.database();
+    console.log('✅ Firebase connected');
+    loadData();
+  } catch(err){
+    console.error('❌ Firebase init error:', err);
+    alert('Firebase connection failed: ' + err.message);
+  }
+}
 
-if (window._fbResolve) window._fbResolve();
-console.log('✅ Firebase initialized successfully!');
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initFirebase);
 </script>
 
-<!-- ═══ MAIN GAME SCRIPT ═══ -->
+<!-- ═══════════════════════════════════════════════
+     ADMIN LOGIC
+     ═══════════════════════════════════════════════ -->
 <script>
-window._fbReady = new Promise(r => { window._fbResolve = r; });
-async function fbReady(){ await window._fbReady; }
+// Admin password
+const ADMIN_PASSWORD = 'admin123';
 
-/* ─── Device fingerprint ─── */
-function getDeviceFingerprint(){
-  const n=navigator, s=window.screen;
-  return btoa(`${n.userAgent}_${s.width}x${s.height}_${s.colorDepth}_${n.language}`).substring(0,32);
-}
+// Global variables
+let currentTab = 'deposits';
+let currentRejectData = null;
+let currentEditUser = null;
+let currentMessageUser = null;
+let currentBanUser = null;
 
-/* ─── Game State ─── */
-let gameState = {
-  userId:null, userName:'', userPhone:'',
-  balance:0, currentBet:0, currentWin:0,
-  minesCount:3, gameActive:false,
-  minePositions:[], revealedTiles:[],
-  betSet:false, tilesClicked:false
-};
-
-/* ─── Sound Effects ─── */
-const sounds = {
-  click: new Audio('data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU4AAAB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/'),
-  success: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWAAAAB/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/'),
-  error: new Audio('data:audio/wav;base64,UklGRh4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAf39/gICAf39/gIB/f39/f4CAf39/gH+Af4B/gH+Af39/f3+Af4B/gH+Af39/'),
-  win: new Audio('data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YW4AAAB/gICAgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpI='),
-  mine: new Audio('data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWIAAACAfn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+')
-};
-
-// Preload sounds
-Object.values(sounds).forEach(sound => {
-  sound.volume = 0.3;
-  sound.load();
-});
-
-function playSound(soundName){
-  try {
-    if(sounds[soundName]){
-      sounds[soundName].currentTime = 0;
-      sounds[soundName].play().catch(e => console.log('Sound blocked:', e));
-    }
-  } catch(e) {
-    console.log('Sound error:', e);
-  }
-}
-
-/* ─── Win-rate table ─── */
-const WIN_RATES = {
-   1:0.02, 2:0.05, 3:0.10, 4:0.20, 5:0.40,
-   6:0.60, 7:0.70, 8:0.80, 9:0.90, 10:1.00,
-  11:1.10,12:1.20,13:1.30,14:1.40,15:1.50,
-  16:1.60,17:1.70,18:1.80,19:1.90,20:2.00,
-  21:2.20,22:2.50,23:3.00,24:4.00,
-};
-function getWinRate(){ return WIN_RATES[gameState.minesCount] || 0.10; }
-
-/* ═══════════════════════════════════════════════
-   DEPOSIT SYSTEM (Mirror of Withdraw System)
-   ═══════════════════════════════════════════════ */
-
-let depositMethod = 'jazz';
-let depositLockTimerInterval = null;
-
-// Deposit method switching
-function switchDepositMethod(method){
-  playSound('click');
-  depositMethod = method;
-  const tabJ = document.getElementById('depTabJazz');
-  const tabE = document.getElementById('depTabEasy');
-  const numberEl = document.getElementById('depositNumber');
-  
-  if(method === 'jazz'){
-    tabJ.classList.add('active-tab');
-    tabJ.classList.remove('easy-active');
-    tabE.classList.remove('active-tab','easy-active');
-    numberEl.textContent = '03266916283';
+// Login
+function adminLogin(){
+  const pw = document.getElementById('adminPassword').value;
+  if(pw === ADMIN_PASSWORD){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('active');
+    loadData();
   } else {
-    tabE.classList.add('active-tab','easy-active');
-    tabJ.classList.remove('active-tab');
-    numberEl.textContent = '03193433587';
+    alert('❌ Wrong password!');
   }
 }
 
-// Copy deposit number to clipboard
-function copyDepositNumber(){
-  const number = document.getElementById('depositNumber').textContent;
-  const display = document.getElementById('depositNumberDisplay');
-  
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(number).then(() => {
-      display.classList.add('copied');
-      setTimeout(() => display.classList.remove('copied'), 2000);
-      playSound('success');
-    }).catch(err => {
-      console.error('Copy failed:', err);
-    });
-  } else {
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea');
-    textArea.value = number;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-    
-    display.classList.add('copied');
-    setTimeout(() => display.classList.remove('copied'), 2000);
-    playSound('success');
-  }
-}
-
-// Check deposit lock status
-async function checkDepositLock(){
-  try {
-    const userSnap = await window.dbGet(window.dbRef(window.db, `users/${gameState.userPhone}`));
-    if(!userSnap.exists()) return { locked: false };
-    
-    const user = userSnap.val();
-    const rejections = user.depositRejections || 0;
-    const lockUntil = user.depositLockUntil || 0;
-    const now = Date.now();
-    
-    if(rejections >= 3 && now < lockUntil){
-      const remaining = Math.ceil((lockUntil - now) / 1000);
-      const minutes = Math.floor(remaining / 60);
-      const seconds = remaining % 60;
-      return { 
-        locked: true, 
-        lockUntil: lockUntil, 
-        remaining: remaining,
-        display: `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`,
-        rejections: rejections
-      };
-    }
-    
-    if(rejections >= 3 && now >= lockUntil){
-      await window.dbUpdate(window.dbRef(window.db, `users/${gameState.userPhone}`), {
-        depositRejections: 0,
-        depositLockUntil: null
-      });
-      return { locked: false, reset: true };
-    }
-    
-    return { locked: false };
-  } catch(e){
-    console.error('Check deposit lock error:', e);
-    return { locked: false };
-  }
-}
-
-// Check if user has pending deposit
-async function checkPendingDeposit(){
-  try {
-    const snapshot = await window.dbGet(window.dbRef(window.db, 'depositRequests'));
-    if(!snapshot.exists()) return false;
-    
-    let hasPending = false;
-    snapshot.forEach(child => {
-      const req = child.val();
-      if(req.phone === gameState.userPhone && req.status === 'pending'){
-        hasPending = true;
-      }
-    });
-    
-    return hasPending;
-  } catch(e){
-    console.error('Check pending deposit error:', e);
-    return false;
-  }
-}
-
-// Update deposit button and status display
-async function updateDepositStatus(){
-  const depositBtn = document.getElementById('depositBtn');
-  const pendingStatus = document.getElementById('pendingDepositStatus');
-  const lockStatusDiv = document.getElementById('depositLockStatus');
-  
-  try {
-    const lockStatus = await checkDepositLock();
-    const hasPending = await checkPendingDeposit();
-    
-    // Show/hide pending status
-    if(hasPending){
-      pendingStatus.style.display = 'block';
-      depositBtn.disabled = true;
-      depositBtn.style.opacity = '0.5';
-      depositBtn.textContent = '⏳ PENDING';
-    } else {
-      pendingStatus.style.display = 'none';
-      depositBtn.disabled = lockStatus.locked;
-      depositBtn.style.opacity = lockStatus.locked ? '0.5' : '1';
-      depositBtn.textContent = lockStatus.locked ? '🔒 LOCKED' : 'DEPOSIT';
-    }
-    
-    // Show/hide lock status
-    if(lockStatus.locked){
-      lockStatusDiv.classList.add('active');
-      document.getElementById('lockReason').textContent = 
-        `Your deposit requests have been rejected ${lockStatus.rejections} times. Account locked for 30 minutes.`;
-      updateLockTimer(lockStatus.remaining);
-      startLockTimer(lockStatus.lockUntil);
-    } else {
-      lockStatusDiv.classList.remove('active');
-      if(depositLockTimerInterval){
-        clearInterval(depositLockTimerInterval);
-        depositLockTimerInterval = null;
-      }
-    }
-    
-  } catch(e){
-    console.error('Update deposit status error:', e);
-  }
-}
-
-// Update lock timer display
-function updateLockTimer(seconds){
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  document.getElementById('lockTimer').textContent = 
-    `${minutes.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-}
-
-// Start lock timer countdown
-function startLockTimer(lockUntil){
-  if(depositLockTimerInterval) clearInterval(depositLockTimerInterval);
-  
-  depositLockTimerInterval = setInterval(() => {
-    const now = Date.now();
-    const remaining = Math.ceil((lockUntil - now) / 1000);
-    
-    if(remaining <= 0){
-      clearInterval(depositLockTimerInterval);
-      depositLockTimerInterval = null;
-      updateDepositStatus();
-      return;
-    }
-    
-    updateLockTimer(remaining);
-  }, 1000);
-}
-
-// Check for admin messages
-async function checkAdminMessages(){
-  try {
-    const snapshot = await window.dbGet(window.dbRef(window.db, `adminMessages/${gameState.userPhone}`));
-    if(!snapshot.exists()) return;
-    
-    const messages = [];
-    snapshot.forEach(child => {
-      const msg = child.val();
-      if(!msg.read){
-        messages.push({id: child.key, ...msg});
-      }
-    });
-    
-    // Sort by timestamp (newest first)
-    messages.sort((a,b) => b.timestamp - a.timestamp);
-    
-    if(messages.length > 0){
-      const latestMsg = messages[0];
-      showAdminMessage(latestMsg);
-      
-      // Mark as read
-      await window.dbUpdate(window.dbRef(window.db, `adminMessages/${gameState.userPhone}/${latestMsg.id}`), {
-        read: true,
-        readAt: Date.now()
-      });
-    }
-    
-  } catch(e){
-    console.error('Check admin messages error:', e);
-  }
-}
-
-// Show admin message
-function showAdminMessage(message){
-  const adminMsgDiv = document.getElementById('adminMessage');
-  const msgText = document.getElementById('adminMessageText');
-  const msgTime = document.getElementById('adminMessageTime');
-  
-  msgText.textContent = message.message || 'No message content';
-  msgTime.textContent = message.timestamp ? new Date(message.timestamp).toLocaleString() : '';
-  
-  adminMsgDiv.classList.add('active');
-  
-  // Auto-hide after 10 seconds
-  setTimeout(() => {
-    adminMsgDiv.classList.remove('active');
-  }, 10000);
-}
-
-// Listen to deposit requests and admin messages
-function listenToUserUpdates(phone){
-  // Listen to user data changes
-  window.dbOnValue(window.dbRef(window.db, `users/${phone}`), async snapshot => {
-    if(!snapshot.exists()) return;
-    
-    const user = snapshot.val();
-    
-    // Check if banned
-    if(user.banned){
-      showKickedScreen();
-      return;
-    }
-    
-    // Update game state
-    gameState.balance = user.balance || 0;
-    updateDisplay();
-    
-    // Check deposit status
-    await updateDepositStatus();
-  });
-  
-  // Listen to deposit requests
-  window.dbOnValue(window.dbRef(window.db, 'depositRequests'), async () => {
-    await updateDepositStatus();
-  });
-  
-  // Listen to admin messages
-  window.dbOnValue(window.dbRef(window.db, `adminMessages/${phone}`), snapshot => {
-    if(!snapshot.exists()) return;
-    
-    // Find unread messages
-    snapshot.forEach(child => {
-      const msg = child.val();
-      if(!msg.read){
-        showAdminMessage(msg);
-        
-        // Mark as read
-        window.dbUpdate(window.dbRef(window.db, `adminMessages/${phone}/${child.key}`), {
-          read: true,
-          readAt: Date.now()
-        }).catch(e => console.error('Mark read error:', e));
-      }
-    });
-  });
-}
-
-// Open deposit modal
-async function openDepositModal(){
-  playSound('click');
-  
-  // Check lock status
-  const lockStatus = await checkDepositLock();
-  if(lockStatus.locked){
-    alert(`🔒 Deposit locked!\n\nYou have ${lockStatus.rejections} rejected deposit requests.\nWait ${lockStatus.display} before trying again.`);
-    return;
-  }
-  
-  // Check pending deposit
-  const hasPending = await checkPendingDeposit();
-  if(hasPending){
-    alert('⏳ You already have a pending deposit request.\nWait for admin approval.');
-    return;
-  }
-  
-  // Reset form
-  switchDepositMethod('jazz');
-  document.getElementById('depositAmount').value = '';
-  
-  document.getElementById('depositModal').classList.add('active');
-}
-
-// Submit deposit request
-async function submitDeposit(){
-  playSound('click');
-  
-  const amount = parseInt(document.getElementById('depositAmount').value);
-  const method = depositMethod === 'jazz' ? 'jazzcash' : 'easypaisa';
-  
-  // Validation
-  if(!amount || amount < 500){
-    playSound('error');
-    alert('Minimum deposit amount is Rs 500');
-    return;
-  }
-  
-  // Check lock status
-  const lockStatus = await checkDepositLock();
-  if(lockStatus.locked){
-    playSound('error');
-    alert(`🔒 Deposit locked!\nWait ${lockStatus.display} before trying again.`);
-    return;
-  }
-  
-  // Check pending deposit
-  const hasPending = await checkPendingDeposit();
-  if(hasPending){
-    playSound('error');
-    alert('⏳ You already have a pending deposit request.\nWait for admin approval.');
-    return;
-  }
-  
-  try {
-    // Submit to Firebase
-    const requestRef = window.dbPush(window.dbRef(window.db, 'depositRequests'));
-    await window.dbSet(requestRef, {
-      id: requestRef.key,
-      userId: gameState.userPhone,
-      name: gameState.userName,
-      phone: gameState.userPhone,
-      amount: amount,
-      paymentMethod: method,
-      status: 'pending',
-      timestamp: Date.now(),
-      createdAt: window.dbServerTimestamp()
-    });
-    
-    playSound('success');
-    alert('✅ Deposit request submitted successfully!\nAdmin will approve soon.');
-    closeModal('depositModal');
-    
-  } catch(e){
-    console.error('Submit deposit error:', e);
-    playSound('error');
-    alert('❌ Failed to submit deposit request');
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   WITHDRAW SYSTEM
-   ═══════════════════════════════════════════════ */
-
-let withdrawMethod = 'jazz';
-
-// Withdraw method switching
-function switchWithdrawMethod(method){
-  playSound('click');
-  withdrawMethod = method;
-  const tabJ = document.getElementById('tabJazz');
-  const tabE = document.getElementById('tabEasy');
-  const input = document.getElementById('withdrawPhone');
-  
-  if(method === 'jazz'){
-    tabJ.classList.add('active-tab');
-    tabJ.classList.remove('easy-active');
-    tabE.classList.remove('active-tab','easy-active');
-    input.placeholder = 'JazzCash 03XXXXXXXXX';
-  } else {
-    tabE.classList.add('active-tab','easy-active');
-    tabJ.classList.remove('active-tab');
-    input.placeholder = 'Easypaisa 03XXXXXXXXX';
-  }
-}
-
-// Check withdraw cooldown
-function checkWithdrawCooldown(){
-  const last = localStorage.getItem(`lastWithdraw_${gameState.userPhone}`);
-  if(last){ 
-    const elapsed = Date.now() - parseInt(last);
-    const cooldown = 2 * 60 * 60 * 1000; // 2 hours
-    if(elapsed < cooldown){
-      return {
-        allowed: false, 
-        remaining: Math.ceil((cooldown - elapsed) / 60000)
-      };
-    }
-  }
-  return { allowed: true };
-}
-
-// Check pending withdraw
-async function checkPendingWithdraw(){
-  try {
-    const snapshot = await window.dbGet(window.dbRef(window.db, 'withdrawRequests'));
-    if(!snapshot.exists()) return false;
-    
-    let hasPending = false;
-    snapshot.forEach(child => {
-      const req = child.val();
-      if(req.phone === gameState.userPhone && req.status === 'pending'){
-        hasPending = true;
-      }
-    });
-    
-    return hasPending;
-  } catch(e){
-    console.error('Check pending withdraw error:', e);
-    return false;
-  }
-}
-
-// Update withdraw button
-async function updateWithdrawStatus(){
-  const withdrawBtn = document.getElementById('withdrawBtn');
-  
-  try {
-    const hasPending = await checkPendingWithdraw();
-    
-    if(hasPending){
-      withdrawBtn.disabled = true;
-      withdrawBtn.style.opacity = '0.5';
-      withdrawBtn.textContent = '⏳ PENDING';
-    } else {
-      withdrawBtn.disabled = false;
-      withdrawBtn.style.opacity = '1';
-      withdrawBtn.textContent = 'WITHDRAW';
-    }
-    
-  } catch(e){
-    console.error('Update withdraw status error:', e);
-  }
-}
-
-// Listen to withdraw requests
-function listenToWithdrawUpdates(){
-  window.dbOnValue(window.dbRef(window.db, 'withdrawRequests'), async () => {
-    await updateWithdrawStatus();
-  });
-}
-
-// Open withdraw modal
-async function openWithdrawModal(){
-  playSound('click');
-  
-  // Check pending withdraw
-  const hasPending = await checkPendingWithdraw();
-  if(hasPending){
-    alert('⏳ You already have a pending withdrawal request.\nWait for admin approval.');
-    return;
-  }
-  
-  // Reset form
-  switchWithdrawMethod('jazz');
-  document.getElementById('withdrawPhone').value = '';
-  document.getElementById('withdrawAmount').value = '';
-  
-  document.getElementById('withdrawModal').classList.add('active');
-}
-
-// Submit withdraw request
-async function submitWithdraw(){
-  playSound('click');
-  
-  const phone = document.getElementById('withdrawPhone').value.trim();
-  const amount = parseInt(document.getElementById('withdrawAmount').value);
-  
-  // Validation
-  if(!/^03[0-9]{9}$/.test(phone)){
-    playSound('error');
-    alert(withdrawMethod === 'jazz' ? 'Invalid JazzCash number!' : 'Invalid Easypaisa number!');
-    return;
-  }
-  
-  if(!amount || amount < 1000){
-    playSound('error');
-    alert('Minimum withdraw amount is Rs 1000');
-    return;
-  }
-  
-  if(amount > gameState.balance){
-    playSound('error');
-    alert('Insufficient balance!');
-    return;
-  }
-  
-  // Check cooldown
-  const cooldown = checkWithdrawCooldown();
-  if(!cooldown.allowed){
-    playSound('error');
-    const hours = Math.floor(cooldown.remaining / 60);
-    const minutes = cooldown.remaining % 60;
-    alert(`⏳ Wait ${hours}h ${minutes}m before next withdraw`);
-    return;
-  }
-  
-  // Check pending withdraw
-  const hasPending = await checkPendingWithdraw();
-  if(hasPending){
-    playSound('error');
-    alert('You already have a pending withdraw request');
-    return;
-  }
-  
-  try {
-    // Submit to Firebase
-    const requestRef = window.dbPush(window.dbRef(window.db, 'withdrawRequests'));
-    await window.dbSet(requestRef, {
-      id: requestRef.key,
-      userId: gameState.userPhone,
-      name: gameState.userName,
-      phone: gameState.userPhone,
-      jazzCash: phone,
-      withdrawMethod: withdrawMethod,
-      amount: amount,
-      status: 'pending',
-      timestamp: Date.now(),
-      createdAt: window.dbServerTimestamp()
-    });
-    
-    // Update cooldown
-    localStorage.setItem(`lastWithdraw_${gameState.userPhone}`, Date.now().toString());
-    
-    playSound('success');
-    alert('✅ Withdraw request submitted successfully!\nAdmin will process soon.');
-    closeModal('withdrawModal');
-  } catch(e){
-    console.error('Submit withdraw error:', e);
-    playSound('error');
-    alert('❌ Failed to submit withdraw request');
-  }
-}
-
-/* ─── Firebase helpers ─── */
-async function saveUserData(phone,data){
-  await fbReady();
-  try{
-    await window.dbSet(window.dbRef(window.db,`users/${phone}`),{...data,lastUpdated:window.dbServerTimestamp()});
-    return true;
-  }catch(e){ console.error(e); return false; }
-}
-
-async function getUserData(phone){
-  await fbReady();
-  try{
-    const snap = await window.dbGet(window.dbRef(window.db,`users/${phone}`));
-    return snap.exists() ? snap.val() : null;
-  }catch(e){ console.error(e); return null; }
-}
-
-async function updateUserBalance(phone,bal){
-  await fbReady();
-  try{
-    await window.dbUpdate(window.dbRef(window.db,`users/${phone}`),{balance:bal,lastUpdated:window.dbServerTimestamp()});
-    return true;
-  }catch(e){ console.error(e); return false; }
-}
-
-/* ─── Login ─── */
-async function handleLogin(){
-  await fbReady();
-  const name  = document.getElementById('loginName').value.trim();
-  const phone = document.getElementById('loginPhone').value.trim();
-  if(!name){ showMessage('loginMsg','Please enter your name!','error'); return; }
-  if(!/^03[0-9]{9}$/.test(phone)){ showMessage('loginMsg','Invalid phone! Must be 03XXXXXXXXX','error'); return; }
-  showMessage('loginMsg','Logging in…','success');
-
-  const deviceId = getDeviceFingerprint();
-  const namePairKey = `${name}_${phone}`;
-
-  try {
-    // Check: Banned phones
-    const bannedPhoneSnap = await window.dbGet(window.dbRef(window.db, `bannedPhones/${phone}`));
-    if(bannedPhoneSnap.exists()){
-      showMessage('loginMsg','','error');
-      setTimeout(() => showKickedScreen(), 500);
-      return;
-    }
-    
-    // Check: Phone number ban
-    const phoneCheckSnap = await window.dbGet(window.dbRef(window.db, `users/${phone}`));
-    if(phoneCheckSnap.exists()){
-      const phoneUserData = phoneCheckSnap.val();
-      if(phoneUserData.banned){
-        showMessage('loginMsg','','error');
-        setTimeout(() => showKickedScreen(), 500);
-        return;
-      }
-    }
-    
-    // Check: Name-Phone pair lock
-    const pairSnap = await window.dbGet(window.dbRef(window.db, `namePhonePairs/${namePairKey}`));
-    if(pairSnap.exists()){
-      const pairData = pairSnap.val();
-      if(pairData.banned){
-        showMessage('loginMsg','','error');
-        setTimeout(() => showKickedScreen(), 500);
-        return;
-      }
-      if(pairData.deviceId !== deviceId){
-        showMessage('loginMsg','❌ This name-phone combination is locked to another device!','error');
-        return;
-      }
-    }
-    
-    // Check: Device limit (max 2 users per device)
-    const deviceTrackSnap = await window.dbGet(window.dbRef(window.db, `deviceTracking/${deviceId}`));
-    if(deviceTrackSnap.exists()){
-      const deviceData = deviceTrackSnap.val();
-      const usersOnDevice = deviceData.users || {};
-      const userCount = Object.keys(usersOnDevice).length;
-      
-      if(!usersOnDevice[phone] && userCount >= 2){
-        showMessage('loginMsg','❌ Maximum 2 accounts per device!','error');
-        return;
-      }
-      
-      if(usersOnDevice[phone] && usersOnDevice[phone].name !== name){
-        showMessage('loginMsg','❌ Phone number registered with different name!','error');
-        return;
-      }
-    }
-    
-    // Check: User already logged in or banned
-    const userSnap = await window.dbGet(window.dbRef(window.db, `users/${phone}`));
-    if(userSnap.exists()){
-      const userData = userSnap.val();
-      
-      if(userData.banned){
-        showKickedScreen();
-        return;
-      }
-      
-      if(userData.isOnline && userData.deviceId && userData.deviceId !== deviceId){
-        showMessage('loginMsg','یہ اکاؤنٹ پہلے سے کسی اور ڈیوائس پر لاگ ان ہے!','error');
-        return;
-      }
-      
-      if(userData.name !== name){
-        showMessage('loginMsg','❌ Name does not match registered name!','error');
-        return;
-      }
-    }
-    
-    // All checks passed - proceed with login
-    const now = Date.now();
-    const updates = {};
-    
-    let userData = userSnap.exists() ? userSnap.val() : null;
-    
-    // Update or create user data
-    if(!userData){
-      updates[`users/${phone}`] = {
-        name, phone, balance:0, totalDeposit:0, totalWithdraw:0,
-        createdAt:now, deviceId, isOnline:true, lastLogin:now
-      };
-    } else {
-      updates[`users/${phone}/deviceId`] = deviceId;
-      updates[`users/${phone}/isOnline`] = true;
-      updates[`users/${phone}/lastLogin`] = now;
-      updates[`users/${phone}/name`] = name;
-    }
-    
-    // Lock name-phone pair to this device
-    updates[`namePhonePairs/${namePairKey}/deviceId`] = deviceId;
-    updates[`namePhonePairs/${namePairKey}/registeredAt`] = now;
-    updates[`namePhonePairs/${namePairKey}/locked`] = true;
-    
-    // Track device usage
-    updates[`deviceTracking/${deviceId}/users/${phone}/name`] = name;
-    updates[`deviceTracking/${deviceId}/users/${phone}/lastLogin`] = now;
-    
-    await window.dbUpdate(window.dbRef(window.db), updates);
-    
-    // Continue with normal login flow
-    gameState.userId = phone;
-    gameState.userName = name;
-    gameState.userPhone = phone;
-    gameState.balance = userData ? (userData.balance || 0) : 0;
-    
-    document.getElementById('displayName').textContent = gameState.userName;
-    document.getElementById('displayPhone').textContent = phone;
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('gameScreen').classList.remove('hidden');
-    
-    // Listen to user updates
-    listenToUserUpdates(phone);
-    listenToWithdrawUpdates();
-    
-    // Check admin messages
-    await checkAdminMessages();
-    
-    // Setup game
-    initializeGrid();
-    updateDisplay();
-    await updateDepositStatus();
-    await updateWithdrawStatus();
-    
-    if(!userData){
-      showMessage('loginMsg','✅ Account created!','success');
-    }
-    
-  } catch(e){
-    console.error(e);
-    showMessage('loginMsg','❌ Login failed: ' + e.message,'error');
-  }
-}
-
-async function handleLogout(){
+// Logout
+function adminLogout(){
   if(confirm('Are you sure you want to logout?')){
-    try{ 
-      await fbReady(); 
-      await window.dbUpdate(window.dbRef(window.db,`users/${gameState.userPhone}`),{isOnline:false,deviceId:null}); 
-    }catch(e){}
-    
-    // Clear timers
-    if(depositLockTimerInterval){
-      clearInterval(depositLockTimerInterval);
-      depositLockTimerInterval = null;
-    }
-    
     location.reload();
   }
 }
 
-function showKickedScreen(){ 
-  document.getElementById('kickedOverlay').classList.add('active'); 
-}
-
-/* ─── Grid & Tile logic ─── */
-function initializeGrid(){
-  const grid = document.getElementById('gameGrid');
-  grid.innerHTML='';
-  for(let i=0;i<25;i++){
-    const t = document.createElement('div');
-    t.className='tile';
-    t.onclick = ()=> clickTile(i);
-    grid.appendChild(t);
+// Tab switching
+function showTab(tabName, btn){
+  currentTab = tabName;
+  
+  // Update active tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  // Show selected tab
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+  
+  // Load data for tab
+  if(tabName === 'deposits'){
+    loadDeposits();
+  } else if(tabName === 'withdrawals'){
+    loadWithdrawals();
+  } else if(tabName === 'users'){
+    loadUsers();
+  } else if(tabName === 'lockedUsers'){
+    loadLockedUsers();
   }
 }
 
-function clickTile(index){
-  if(gameState.revealedTiles.includes(index)) return;
-  if(!gameState.gameActive){
-    if(gameState.currentBet===0){ 
-      playSound('error');
-      showMessage('gameMsg','Set bet first!','error'); 
-      return; 
+// Load all data initially
+function loadData(){
+  if(!db) return;
+  
+  // Load deposits
+  loadDeposits();
+  
+  // Load withdrawals
+  loadWithdrawals();
+  
+  // Load users
+  loadUsers();
+  
+  // Load stats
+  updateStats();
+  
+  // Auto-refresh every 30 seconds
+  setInterval(() => {
+    if(currentTab === 'deposits') loadDeposits();
+    else if(currentTab === 'withdrawals') loadWithdrawals();
+    else if(currentTab === 'users') loadUsers();
+    else if(currentTab === 'lockedUsers') loadLockedUsers();
+    updateStats();
+  }, 30000);
+}
+
+// Update statistics
+async function updateStats(){
+  try {
+    const [usersSnap, depositsSnap, withdrawalsSnap] = await Promise.all([
+      db.ref('users').once('value'),
+      db.ref('depositRequests').once('value'),
+      db.ref('withdrawRequests').once('value')
+    ]);
+    
+    let totalUsers = 0;
+    let onlineUsers = 0;
+    let pendingDeposits = 0;
+    let pendingWithdrawals = 0;
+    
+    // Count users
+    if(usersSnap.exists()){
+      const users = usersSnap.val();
+      totalUsers = Object.keys(users).length;
+      onlineUsers = Object.values(users).filter(u => u.isOnline).length;
     }
-    startGame();
+    
+    // Count pending deposits
+    if(depositsSnap.exists()){
+      depositsSnap.forEach(child => {
+        if(child.val().status === 'pending') pendingDeposits++;
+      });
+    }
+    
+    // Count pending withdrawals
+    if(withdrawalsSnap.exists()){
+      withdrawalsSnap.forEach(child => {
+        if(child.val().status === 'pending') pendingWithdrawals++;
+      });
+    }
+    
+    // Update display
+    document.getElementById('totalUsers').textContent = totalUsers;
+    document.getElementById('onlineUsers').textContent = onlineUsers;
+    document.getElementById('pendingDeposits').textContent = pendingDeposits;
+    document.getElementById('pendingWithdrawals').textContent = pendingWithdrawals;
+    
+  } catch(e){
+    console.error('Update stats error:', e);
   }
-  gameState.tilesClicked = true;
-  gameState.revealedTiles.push(index);
-  const tiles = document.querySelectorAll('.tile');
-
-  if(gameState.minePositions.includes(index)){
-    playSound('mine');
-    tiles[index].textContent = '💣';
-    tiles[index].classList.add('revealed','mine','mine-hit');
-    gameOver(false);
-  } else {
-    playSound('success');
-    tiles[index].textContent = '💎';
-    tiles[index].classList.add('revealed','safe');
-    gameState.currentWin += Math.floor(gameState.currentBet * getWinRate());
-    updateDisplay();
-    document.getElementById('cashoutBtn').disabled = false;
-  }
 }
 
-function startGame(){
-  playSound('click');
-  gameState.gameActive    = true;
-  gameState.minePositions = [];
-  gameState.revealedTiles = [];
-  gameState.currentWin    = 0;
-  while(gameState.minePositions.length < gameState.minesCount){
-    const p = Math.floor(Math.random()*25);
-    if(!gameState.minePositions.includes(p)) gameState.minePositions.push(p);
-  }
-  updateDisplay();
-}
-
-async function cashout(){
-  if(!gameState.gameActive || gameState.currentWin===0) return;
-  playSound('win');
-  const total = gameState.currentBet + gameState.currentWin;
-  gameState.balance += total;
-  await updateUserBalance(gameState.userPhone, gameState.balance);
-  gameState.currentBet=0; gameState.currentWin=0; gameState.gameActive=false;
-  gameState.betSet=false; gameState.tilesClicked=false;
-  document.getElementById('cashoutBtn').disabled=true;
-  updateDisplay(); revealAllTiles();
-  showMessage('gameMsg',`Cashed out Rs ${total}! 🎉`,'success');
-}
-
-function gameOver(won){
-  if(!won) playSound('error');
-  gameState.gameActive=false; gameState.currentBet=0; gameState.currentWin=0;
-  gameState.betSet=false; gameState.tilesClicked=false;
-  document.getElementById('cashoutBtn').disabled=true;
-  updateDisplay(); revealAllTiles();
-  if(!won) showMessage('gameMsg','Game Over! 💔','error');
-}
-
-function revealAllTiles(){
-  document.querySelectorAll('.tile').forEach((t,i)=>{
-    if(!t.classList.contains('revealed')){
-      t.classList.add('revealed');
-      if(gameState.minePositions.includes(i)){
-        t.textContent='💣'; t.classList.add('mine');
-      } else {
-        t.textContent='💎'; t.classList.add('safe');
+// Load deposits
+async function loadDeposits(){
+  try {
+    const snapshot = await db.ref('depositRequests').orderByChild('timestamp').once('value');
+    const content = document.getElementById('depositsContent');
+    
+    if(!snapshot.exists()){
+      content.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No deposit requests</div>';
+      return;
+    }
+    
+    let html = '';
+    let hasPending = false;
+    
+    snapshot.forEach(child => {
+      const deposit = child.val();
+      
+      // Show only pending deposits by default
+      if(deposit.status === 'pending'){
+        hasPending = true;
+        const date = deposit.timestamp ? new Date(deposit.timestamp).toLocaleString() : 'N/A';
+        const method = deposit.paymentMethod === 'jazzcash' ? 'JazzCash' : 'Easypaisa';
+        
+        html += `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${deposit.name || 'Unknown'}</div>
+                <div class="card-info">📱 ${deposit.phone || 'N/A'}</div>
+                <div class="card-info">🕒 ${date}</div>
+                <div class="card-info">💳 ${method}</div>
+              </div>
+              <span class="badge badge-pending">PENDING</span>
+            </div>
+            
+            <div class="card-amount" style="color:var(--neon-emerald);">+ Rs ${deposit.amount || 0}</div>
+            
+            <div class="btn-row">
+              <button class="btn-action btn-approve" onclick="approveDeposit('${child.key}', '${deposit.phone}', ${deposit.amount})">
+                ✅ Approve
+              </button>
+              <button class="btn-action btn-reject" onclick="showRejectDepositModal('${child.key}', '${deposit.phone}', '${deposit.name}', ${deposit.amount})">
+                ❌ Reject
+              </button>
+              <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="viewUserDetails('${deposit.phone}')">
+                👁 View User
+              </button>
+            </div>
+          </div>
+        `;
       }
+    });
+    
+    if(!hasPending){
+      html = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No pending deposit requests</div>';
+    }
+    
+    content.innerHTML = html;
+    
+  } catch(e){
+    console.error('Load deposits error:', e);
+    document.getElementById('depositsContent').innerHTML = 
+      '<div style="text-align:center; padding:40px; color:var(--neon-rose);">Error loading deposits</div>';
+  }
+}
+
+// Load withdrawals
+async function loadWithdrawals(){
+  try {
+    const snapshot = await db.ref('withdrawRequests').orderByChild('timestamp').once('value');
+    const content = document.getElementById('withdrawalsContent');
+    
+    if(!snapshot.exists()){
+      content.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No withdrawal requests</div>';
+      return;
+    }
+    
+    let html = '';
+    let hasPending = false;
+    
+    snapshot.forEach(child => {
+      const withdrawal = child.val();
+      
+      // Show only pending withdrawals by default
+      if(withdrawal.status === 'pending'){
+        hasPending = true;
+        const date = withdrawal.timestamp ? new Date(withdrawal.timestamp).toLocaleString() : 'N/A';
+        const method = withdrawal.withdrawMethod === 'jazz' ? 'JazzCash' : 'Easypaisa';
+        
+        html += `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${withdrawal.name || 'Unknown'}</div>
+                <div class="card-info">📱 ${withdrawal.phone || 'N/A'}</div>
+                <div class="card-info">💳 ${method}: ${withdrawal.jazzCash || 'N/A'}</div>
+                <div class="card-info">🕒 ${date}</div>
+              </div>
+              <span class="badge badge-pending">PENDING</span>
+            </div>
+            
+            <div class="card-amount" style="color:var(--neon-rose);">- Rs ${withdrawal.amount || 0}</div>
+            
+            <div class="btn-row">
+              <button class="btn-action btn-approve" onclick="approveWithdrawal('${child.key}', '${withdrawal.phone}', ${withdrawal.amount})">
+                ✅ Approve & Send
+              </button>
+              <button class="btn-action btn-reject" onclick="rejectWithdrawal('${child.key}', '${withdrawal.phone}')">
+                ❌ Reject
+              </button>
+              <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="viewUserDetails('${withdrawal.phone}')">
+                👁 View User
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    });
+    
+    if(!hasPending){
+      html = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No pending withdrawal requests</div>';
+    }
+    
+    content.innerHTML = html;
+    
+  } catch(e){
+    console.error('Load withdrawals error:', e);
+    document.getElementById('withdrawalsContent').innerHTML = 
+      '<div style="text-align:center; padding:40px; color:var(--neon-rose);">Error loading withdrawals</div>';
+  }
+}
+
+// Load users
+async function loadUsers(){
+  try {
+    const snapshot = await db.ref('users').orderByChild('balance').once('value');
+    const content = document.getElementById('usersContent');
+    
+    if(!snapshot.exists()){
+      content.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No users found</div>';
+      return;
+    }
+    
+    let html = '';
+    const users = [];
+    
+    snapshot.forEach(child => {
+      users.push({ phone: child.key, ...child.val() });
+    });
+    
+    // Sort by balance (highest first)
+    users.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+    
+    users.forEach(user => {
+      const badge = user.isOnline 
+        ? '<span class="badge badge-online">● Online</span>' 
+        : '<span class="badge badge-offline">● Offline</span>';
+      
+      const bannedBadge = user.banned 
+        ? '<span class="badge badge-rejected" style="margin-left:8px;">🚫 BANNED</span>' 
+        : '';
+      
+      const depositRejections = user.depositRejections || 0;
+      const lockInfo = user.depositLockUntil && user.depositLockUntil > Date.now()
+        ? `<div class="card-info" style="color:var(--neon-rose);">🔒 Locked until: ${new Date(user.depositLockUntil).toLocaleString()}</div>`
+        : `<div class="card-info">❌ Rejections: ${depositRejections}/3</div>`;
+      
+      html += `
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${user.name || 'Unknown'} ${badge} ${bannedBadge}</div>
+              <div class="card-info">📱 ${user.phone}</div>
+              <div class="card-info">💰 Balance: Rs ${user.balance || 0}</div>
+              ${lockInfo}
+              <div class="card-info">📅 Joined: ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</div>
+            </div>
+          </div>
+          
+          <div class="btn-row">
+            <button class="btn-action btn-edit" onclick="editUserBalance('${user.phone}', '${user.name || 'User'}', ${user.balance || 0})">
+              ✏️ Edit Balance
+            </button>
+            <button class="btn-action" style="background:rgba(96,165,250,0.15); color:var(--neon-blue);" 
+                    onclick="sendMessageToUser('${user.phone}', '${user.name || 'User'}')">
+              📢 Message
+            </button>
+            ${!user.banned ? `
+              <button class="btn-action btn-kick" onclick="showBanUserModal('${user.phone}', '${user.name || 'User'}')">
+                🚫 Ban User
+              </button>
+            ` : ''}
+            <button class="btn-action btn-delete" onclick="deleteUser('${user.phone}', '${user.name || 'User'}')">
+              🗑 Delete
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    
+    content.innerHTML = html;
+    
+  } catch(e){
+    console.error('Load users error:', e);
+    document.getElementById('usersContent').innerHTML = 
+      '<div style="text-align:center; padding:40px; color:var(--neon-rose);">Error loading users</div>';
+  }
+}
+
+// Load locked users
+async function loadLockedUsers(){
+  try {
+    const snapshot = await db.ref('users').once('value');
+    const content = document.getElementById('lockedUsersContent');
+    
+    if(!snapshot.exists()){
+      content.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No locked users</div>';
+      return;
+    }
+    
+    let html = '';
+    let hasLockedUsers = false;
+    const now = Date.now();
+    
+    snapshot.forEach(child => {
+      const user = child.val();
+      
+      // Check if user is locked (3+ rejections and lock not expired)
+      const rejections = user.depositRejections || 0;
+      const lockUntil = user.depositLockUntil || 0;
+      
+      if(rejections >= 3 && lockUntil > now){
+        hasLockedUsers = true;
+        const remaining = Math.ceil((lockUntil - now) / 60000); // minutes
+        
+        html += `
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${user.name || 'Unknown'}</div>
+                <div class="card-info">📱 ${child.key}</div>
+                <div class="card-info">💰 Balance: Rs ${user.balance || 0}</div>
+                <div class="card-info" style="color:var(--neon-rose);">
+                  🔒 Locked for ${remaining} more minutes
+                </div>
+                <div class="card-info">
+                  ❌ Rejections: ${rejections}/3
+                </div>
+              </div>
+              <span class="badge badge-rejected">LOCKED</span>
+            </div>
+            
+            <div class="btn-row">
+              <button class="btn-action btn-approve" onclick="unlockUser('${child.key}')">
+                🔓 Unlock Now
+              </button>
+              <button class="btn-action" style="background:rgba(96,165,250,0.15); color:var(--neon-blue);" 
+                      onclick="sendMessageToUser('${child.key}', '${user.name || 'User'}')">
+                📢 Message
+              </button>
+              <button class="btn-action btn-kick" onclick="showBanUserModal('${child.key}', '${user.name || 'User'}')">
+                🚫 Ban User
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    });
+    
+    if(!hasLockedUsers){
+      html = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No locked users found</div>';
+    }
+    
+    content.innerHTML = html;
+    
+  } catch(e){
+    console.error('Load locked users error:', e);
+    document.getElementById('lockedUsersContent').innerHTML = 
+      '<div style="text-align:center; padding:40px; color:var(--neon-rose);">Error loading locked users</div>';
+  }
+}
+
+// Approve deposit
+async function approveDeposit(requestId, userPhone, amount){
+  if(!confirm(`Approve deposit of Rs ${amount}?\n\nBalance will be added to user's account.`)) return;
+  
+  try {
+    // Get user data
+    const userSnap = await db.ref(`users/${userPhone}`).once('value');
+    if(!userSnap.exists()){
+      alert('User not found!');
+      return;
+    }
+    
+    const user = userSnap.val();
+    
+    // Update user balance and reset rejections
+    await db.ref(`users/${userPhone}`).update({
+      balance: (user.balance || 0) + amount,
+      totalDeposit: (user.totalDeposit || 0) + amount,
+      depositRejections: 0, // Reset rejections
+      depositLockUntil: null // Remove lock
+    });
+    
+    // Update deposit request status
+    await db.ref(`depositRequests/${requestId}`).update({
+      status: 'approved',
+      approvedAt: Date.now(),
+      approvedBy: 'admin'
+    });
+    
+    // Send success message to user
+    const messageRef = db.ref('adminMessages').child(userPhone).push();
+    await messageRef.set({
+      message: `✅ Your deposit of Rs ${amount} has been approved! Balance added to your account.`,
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    alert('✅ Deposit approved successfully!\nBalance added to user account.');
+    
+    // Reload data
+    loadDeposits();
+    loadUsers();
+    loadLockedUsers();
+    updateStats();
+    
+  } catch(e){
+    console.error('Approve deposit error:', e);
+    alert('❌ Error: ' + e.message);
+  }
+}
+
+// Show reject deposit modal
+function showRejectDepositModal(requestId, userPhone, userName, amount){
+  currentRejectData = { requestId, userPhone, userName, amount };
+  
+  // Update modal content
+  document.getElementById('rejectUserName').textContent = userName || 'Unknown';
+  document.getElementById('rejectUserPhone').textContent = 'Phone: ' + userPhone;
+  document.getElementById('rejectAmount').textContent = 'Amount: Rs ' + amount;
+  
+  // Reset custom reason input
+  document.getElementById('customRejectReason').style.display = 'none';
+  document.getElementById('customRejectReason').value = '';
+  
+  // Show modal
+  document.getElementById('rejectDepositModal').classList.add('active');
+}
+
+// Handle reason selection
+document.querySelectorAll('input[name="rejectReason"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const customInput = document.getElementById('customRejectReason');
+    if(this.value === 'custom'){
+      customInput.style.display = 'block';
+      customInput.classList.add('active');
+    } else {
+      customInput.style.display = 'none';
+      customInput.classList.remove('active');
     }
   });
-}
+});
 
-async function resetGame(){
-  if(gameState.betSet && gameState.currentBet>0){
-    const ret = gameState.currentBet + gameState.currentWin;
-    gameState.balance += ret;
-    await updateUserBalance(gameState.userPhone, gameState.balance);
-    showMessage('gameMsg',
-      gameState.tilesClicked
-        ? `Rs ${gameState.currentBet} (bet) + Rs ${gameState.currentWin} (win) واپس ہو گئے!`
-        : `Rs ${gameState.currentBet} واپس ہو گیا!`,
-      'success');
+// Confirm reject deposit
+async function confirmRejectDeposit(){
+  if(!currentRejectData) return;
+  
+  const { requestId, userPhone, userName, amount } = currentRejectData;
+  
+  // Get selected reason
+  const selectedReason = document.querySelector('input[name="rejectReason"]:checked').value;
+  let reasonText = '';
+  
+  // Set reason text based on selection
+  if(selectedReason === 'amount_not_received'){
+    reasonText = 'Amount not received or wrong amount sent';
+  } else if(selectedReason === 'screenshot_missing'){
+    reasonText = 'Payment screenshot missing';
+  } else if(selectedReason === 'fake_screenshot'){
+    reasonText = 'Fake or edited payment screenshot';
+  } else if(selectedReason === 'payment_method_wrong'){
+    reasonText = 'Wrong payment method used';
+  } else if(selectedReason === 'custom'){
+    reasonText = document.getElementById('customRejectReason').value.trim();
+    if(!reasonText){
+      alert('Please enter a custom rejection reason!');
+      return;
+    }
   }
-  gameState.gameActive=false; gameState.currentWin=0; gameState.currentBet=0;
-  gameState.minePositions=[]; gameState.revealedTiles=[];
-  gameState.betSet=false; gameState.tilesClicked=false;
-  document.getElementById('cashoutBtn').disabled=true;
-  initializeGrid(); updateDisplay();
-}
-
-function updateDisplay(){
-  document.getElementById('balance').textContent      = gameState.balance;
-  document.getElementById('win').textContent          = gameState.currentWin;
-  document.getElementById('betDisplay').textContent   = gameState.currentBet;
-  document.getElementById('minesDisplay').textContent = gameState.minesCount;
-}
-
-/* ─── Bet / Mines modals ─── */
-function openBetModal(){
-  playSound('click');
-  if(gameState.gameActive){ 
-    playSound('error');
-    alert('Cannot change bet during active game!'); 
-    return; 
+  
+  if(!confirm(`Reject deposit of Rs ${amount}?\n\nReason: ${reasonText}`)) return;
+  
+  try {
+    // Get user data
+    const userSnap = await db.ref(`users/${userPhone}`).once('value');
+    if(!userSnap.exists()){
+      alert('User not found!');
+      closeModal('rejectDepositModal');
+      return;
+    }
+    
+    const user = userSnap.val();
+    const currentRejections = user.depositRejections || 0;
+    const newRejections = currentRejections + 1;
+    
+    const updates = {
+      depositRejections: newRejections
+    };
+    
+    // Check if this is the 3rd rejection
+    if(newRejections >= 3){
+      const lockUntil = Date.now() + (30 * 60 * 1000); // 30 minutes
+      updates.depositLockUntil = lockUntil;
+    }
+    
+    // Update user rejection count
+    await db.ref(`users/${userPhone}`).update(updates);
+    
+    // Update deposit request status
+    await db.ref(`depositRequests/${requestId}`).update({
+      status: 'rejected',
+      rejectedAt: Date.now(),
+      rejectedBy: 'admin',
+      rejectionReason: reasonText
+    });
+    
+    // Create rejection message for user
+    let userMessage = `❌ Your deposit of Rs ${amount} has been rejected.\nReason: ${reasonText}`;
+    
+    if(newRejections >= 3){
+      userMessage += `\n\n⚠️ WARNING: You have ${newRejections} rejected deposit requests. Your account is now locked for 30 minutes.`;
+    } else {
+      userMessage += `\n\n⚠️ You have ${newRejections} rejected deposit requests (3 rejections will lock your account).`;
+    }
+    
+    // Send message to user
+    const messageRef = db.ref('adminMessages').child(userPhone).push();
+    await messageRef.set({
+      message: userMessage,
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    // Show success message
+    if(newRejections >= 3){
+      alert(`❌ Deposit rejected!\n\nUser now has ${newRejections} rejections.\nAccount locked for 30 minutes.\n\nMessage sent to user.`);
+    } else {
+      alert(`❌ Deposit rejected!\n\nUser now has ${newRejections} rejection(s).\n\nMessage sent to user.`);
+    }
+    
+    // Close modal
+    closeModal('rejectDepositModal');
+    
+    // Reload data
+    loadDeposits();
+    loadUsers();
+    loadLockedUsers();
+    updateStats();
+    
+  } catch(e){
+    console.error('Reject deposit error:', e);
+    alert('❌ Error: ' + e.message);
   }
-  document.getElementById('betModal').classList.add('active');
 }
 
-async function setBet(){
-  const a = parseInt(document.getElementById('betInput').value);
-  if(!a||a<100||a>10000){ 
-    playSound('error');
-    alert('Bet must be Rs 100–10,000'); 
-    return; 
+// Approve withdrawal
+async function approveWithdrawal(requestId, userPhone, amount){
+  if(!confirm(`Step 1: Have you sent Rs ${amount} to the user?\n\nClick OK only after sending money.`)) return;
+  if(!confirm(`Step 2: Confirm approval of withdrawal request?\n\nAmount: Rs ${amount}`)) return;
+  
+  try {
+    // Get user data
+    const userSnap = await db.ref(`users/${userPhone}`).once('value');
+    if(!userSnap.exists()){
+      alert('User not found!');
+      return;
+    }
+    
+    const user = userSnap.val();
+    
+    // Check if user has enough balance
+    if((user.balance || 0) < amount){
+      alert('❌ User has insufficient balance!');
+      return;
+    }
+    
+    // Update user balance
+    const newBalance = Math.max(0, (user.balance || 0) - amount);
+    await db.ref(`users/${userPhone}`).update({
+      balance: newBalance,
+      totalWithdraw: (user.totalWithdraw || 0) + amount
+    });
+    
+    // Update withdrawal request status
+    await db.ref(`withdrawRequests/${requestId}`).update({
+      status: 'approved',
+      approvedAt: Date.now(),
+      approvedBy: 'admin'
+    });
+    
+    // Send success message to user
+    const messageRef = db.ref('adminMessages').child(userPhone).push();
+    await messageRef.set({
+      message: `✅ Your withdrawal of Rs ${amount} has been approved and sent!\nNew balance: Rs ${newBalance}`,
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    alert('✅ Withdrawal approved successfully!\nMoney sent to user.');
+    
+    // Reload data
+    loadWithdrawals();
+    loadUsers();
+    updateStats();
+    
+  } catch(e){
+    console.error('Approve withdrawal error:', e);
+    alert('❌ Error: ' + e.message);
   }
-  if(a>gameState.balance){ 
-    playSound('error');
-    alert('Insufficient balance!'); 
-    return; 
+}
+
+// Reject withdrawal
+async function rejectWithdrawal(requestId, userPhone){
+  if(!confirm('Reject this withdrawal request?\n\nUser will be notified.')) return;
+  
+  try {
+    // Update withdrawal request status
+    await db.ref(`withdrawRequests/${requestId}`).update({
+      status: 'rejected',
+      rejectedAt: Date.now(),
+      rejectedBy: 'admin',
+      rejectionReason: 'Admin rejected'
+    });
+    
+    // Send message to user
+    const messageRef = db.ref('adminMessages').child(userPhone).push();
+    await messageRef.set({
+      message: '❌ Your withdrawal request has been rejected by admin.',
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    alert('✅ Withdrawal rejected!\nUser notified.');
+    
+    // Reload data
+    loadWithdrawals();
+    updateStats();
+    
+  } catch(e){
+    console.error('Reject withdrawal error:', e);
+    alert('❌ Error: ' + e.message);
   }
-  playSound('success');
-  gameState.balance-=a; gameState.currentBet=a; gameState.betSet=true; gameState.tilesClicked=false;
-  await updateUserBalance(gameState.userPhone,gameState.balance);
-  updateDisplay(); closeModal('betModal');
-  showMessage('gameMsg','Bet set! Start playing!','success');
 }
 
-function openMinesModal(){
-  playSound('click');
-  if(gameState.gameActive){ 
-    playSound('error');
-    alert('Cannot change mines during game!'); 
-    return; 
+// Edit user balance
+function editUserBalance(phone, name, currentBalance){
+  currentEditUser = { phone, name, currentBalance };
+  
+  document.getElementById('editUserName').textContent = name;
+  document.getElementById('editUserPhone').textContent = phone;
+  document.getElementById('editCurrentBalance').textContent = 'Rs ' + currentBalance;
+  document.getElementById('editNewBalance').value = currentBalance;
+  
+  document.getElementById('editBalanceModal').classList.add('active');
+}
+
+// Save user balance
+async function saveUserBalance(){
+  const newBalance = parseFloat(document.getElementById('editNewBalance').value);
+  
+  if(isNaN(newBalance) || newBalance < 0){
+    alert('Please enter a valid balance (0 or higher)');
+    return;
   }
-  document.getElementById('minesModal').classList.add('active');
-}
-
-function setMines(){
-  const c = parseInt(document.getElementById('minesInput').value);
-  if(!c||c<1||c>24){ 
-    playSound('error');
-    alert('Mines must be 1–24'); 
-    return; 
+  
+  if(!currentEditUser) return;
+  
+  if(!confirm(`Change balance from Rs ${currentEditUser.currentBalance} to Rs ${newBalance}?\n\nFor user: ${currentEditUser.name} (${currentEditUser.phone})`)) return;
+  
+  try {
+    await db.ref(`users/${currentEditUser.phone}`).update({
+      balance: newBalance
+    });
+    
+    // Send notification to user
+    const messageRef = db.ref('adminMessages').child(currentEditUser.phone).push();
+    await messageRef.set({
+      message: `📊 Your balance has been updated by admin.\nNew balance: Rs ${newBalance}`,
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    alert('✅ Balance updated successfully!');
+    closeModal('editBalanceModal');
+    
+    // Reload users
+    loadUsers();
+    loadLockedUsers();
+    
+  } catch(e){
+    console.error('Save balance error:', e);
+    alert('❌ Error: ' + e.message);
   }
-  playSound('click');
-  gameState.minesCount=c; updateDisplay(); closeModal('minesModal');
 }
 
-/* ─── UI helpers ─── */
-function closeModal(id){ 
-  playSound('click');
-  document.getElementById(id).classList.remove('active'); 
+// Send message to user
+function sendMessageToUser(phone, name){
+  currentMessageUser = { phone, name };
+  
+  document.getElementById('msgUserName').textContent = name;
+  document.getElementById('msgUserPhone').textContent = phone;
+  document.getElementById('adminMessageText').value = '';
+  
+  document.getElementById('sendMessageModal').classList.add('active');
 }
 
-function showMessage(elId, text, type){
-  const el = document.getElementById(elId);
-  el.textContent=text; el.className='msg '+type; el.style.display='block';
-  setTimeout(()=>el.style.display='none', 3000);
+// Send admin message
+async function sendAdminMessage(){
+  const message = document.getElementById('adminMessageText').value.trim();
+  
+  if(!message){
+    alert('Please enter a message!');
+    return;
+  }
+  
+  if(!currentMessageUser) return;
+  
+  if(!confirm(`Send message to ${currentMessageUser.name} (${currentMessageUser.phone})?`)) return;
+  
+  try {
+    const messageRef = db.ref('adminMessages').child(currentMessageUser.phone).push();
+    await messageRef.set({
+      message: message,
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    alert('✅ Message sent successfully!');
+    closeModal('sendMessageModal');
+    
+  } catch(e){
+    console.error('Send message error:', e);
+    alert('❌ Error: ' + e.message);
+  }
 }
 
+// Unlock user
+async function unlockUser(phone){
+  if(!confirm('Unlock this user?\n\nThey will be able to make deposits again.')) return;
+  
+  try {
+    await db.ref(`users/${phone}`).update({
+      depositRejections: 0,
+      depositLockUntil: null
+    });
+    
+    // Send notification to user
+    const messageRef = db.ref('adminMessages').child(phone).push();
+    await messageRef.set({
+      message: '🔓 Your account has been unlocked by admin. You can now make deposits again.',
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    alert('✅ User unlocked successfully!');
+    
+    // Reload data
+    loadUsers();
+    loadLockedUsers();
+    
+  } catch(e){
+    console.error('Unlock user error:', e);
+    alert('❌ Error: ' + e.message);
+  }
+}
+
+// Show ban user modal
+function showBanUserModal(phone, name){
+  currentBanUser = { phone, name };
+  
+  document.getElementById('banUserName').textContent = name;
+  document.getElementById('banUserPhone').textContent = 'Phone: ' + phone;
+  document.getElementById('banReason').value = '';
+  
+  document.getElementById('banUserModal').classList.add('active');
+}
+
+// Confirm ban user
+async function confirmBanUser(){
+  const reason = document.getElementById('banReason').value.trim();
+  const reasonText = reason ? `\nReason: ${reason}` : '';
+  
+  if(!confirm(`PERMANENTLY BAN ${currentBanUser.name} (${currentBanUser.phone})?${reasonText}\n\n⚠️ This action cannot be undone!`)) return;
+  
+  try {
+    // Get user data first
+    const userSnap = await db.ref(`users/${currentBanUser.phone}`).once('value');
+    if(!userSnap.exists()){
+      alert('User not found!');
+      closeModal('banUserModal');
+      return;
+    }
+    
+    const user = userSnap.val();
+    const namePairKey = user.name ? `${user.name}_${currentBanUser.phone}` : null;
+    
+    const updates = {};
+    
+    // Ban the user
+    updates[`users/${currentBanUser.phone}/banned`] = true;
+    updates[`users/${currentBanUser.phone}/isOnline`] = false;
+    updates[`users/${currentBanUser.phone}/deviceId`] = null;
+    updates[`users/${currentBanUser.phone}/bannedAt`] = Date.now();
+    if(reason) updates[`users/${currentBanUser.phone}/banReason`] = reason;
+    
+    // Add to banned phones list
+    updates[`bannedPhones/${currentBanUser.phone}`] = {
+      banned: true,
+      bannedAt: Date.now(),
+      name: user.name || 'Unknown',
+      bannedBy: 'admin',
+      reason: reason || 'No reason provided'
+    };
+    
+    // Remove from device tracking
+    if(user.deviceId){
+      updates[`deviceTracking/${user.deviceId}/users/${currentBanUser.phone}`] = null;
+    }
+    
+    // Lock the name-phone pair permanently
+    if(namePairKey){
+      updates[`namePhonePairs/${namePairKey}/banned`] = true;
+      updates[`namePhonePairs/${namePairKey}/bannedAt`] = Date.now();
+      if(reason) updates[`namePhonePairs/${namePairKey}/banReason`] = reason;
+    }
+    
+    await db.ref().update(updates);
+    
+    alert(`✅ User permanently banned!\n\nPhone number: ${currentBanUser.phone}\nName: ${currentBanUser.name}\n${reason ? 'Reason: ' + reason : ''}`);
+    
+    closeModal('banUserModal');
+    
+    // Reload data
+    loadUsers();
+    loadLockedUsers();
+    updateStats();
+    
+  } catch(e){
+    console.error('Ban user error:', e);
+    alert('❌ Error: ' + e.message);
+  }
+}
+
+// Delete user
+async function deleteUser(phone, name){
+  if(!confirm(`⚠️ DELETE USER: ${name} (${phone})\n\nThis will:\n• Remove all user data\n• Delete deposit/withdrawal history\n• Delete from device tracking\n\nThis action cannot be undone!`)) return;
+  if(!confirm(`FINAL WARNING: Delete ${name} (${phone})?\n\nType "DELETE" to confirm:`)){
+    const userInput = prompt('Type "DELETE" to confirm deletion:');
+    if(userInput !== 'DELETE') return;
+  }
+  
+  try {
+    // Get user data first
+    const userSnap = await db.ref(`users/${phone}`).once('value');
+    if(!userSnap.exists()){
+      alert('User not found!');
+      return;
+    }
+    
+    const user = userSnap.val();
+    const namePairKey = user.name ? `${user.name}_${phone}` : null;
+    
+    const updates = {};
+    
+    // Delete user
+    updates[`users/${phone}`] = null;
+    
+    // Delete from device tracking
+    if(user.deviceId){
+      updates[`deviceTracking/${user.deviceId}/users/${phone}`] = null;
+    }
+    
+    // Delete name-phone pair lock
+    if(namePairKey){
+      updates[`namePhonePairs/${namePairKey}`] = null;
+    }
+    
+    // Delete deposit requests
+    const depositsSnap = await db.ref('depositRequests').once('value');
+    if(depositsSnap.exists()){
+      depositsSnap.forEach(child => {
+        if(child.val().phone === phone){
+          updates[`depositRequests/${child.key}`] = null;
+        }
+      });
+    }
+    
+    // Delete withdrawal requests
+    const withdrawsSnap = await db.ref('withdrawRequests').once('value');
+    if(withdrawsSnap.exists()){
+      withdrawsSnap.forEach(child => {
+        if(child.val().phone === phone){
+          updates[`withdrawRequests/${child.key}`] = null;
+        }
+      });
+    }
+    
+    // Delete admin messages
+    updates[`adminMessages/${phone}`] = null;
+    
+    await db.ref().update(updates);
+    
+    alert('✅ User and all related data deleted!');
+    
+    // Reload data
+    loadUsers();
+    loadDeposits();
+    loadWithdrawals();
+    loadLockedUsers();
+    updateStats();
+    
+  } catch(e){
+    console.error('Delete user error:', e);
+    alert('❌ Error: ' + e.message);
+  }
+}
+
+// View user details
+async function viewUserDetails(phone){
+  try {
+    const userSnap = await db.ref(`users/${phone}`).once('value');
+    if(!userSnap.exists()){
+      alert('User not found!');
+      return;
+    }
+    
+    const user = userSnap.val();
+    let message = `👤 USER DETAILS\n\n`;
+    message += `Name: ${user.name || 'N/A'}\n`;
+    message += `Phone: ${phone}\n`;
+    message += `Balance: Rs ${user.balance || 0}\n`;
+    message += `Total Deposits: Rs ${user.totalDeposit || 0}\n`;
+    message += `Total Withdrawals: Rs ${user.totalWithdraw || 0}\n`;
+    message += `Deposit Rejections: ${user.depositRejections || 0}/3\n`;
+    
+    if(user.depositLockUntil && user.depositLockUntil > Date.now()){
+      const remaining = Math.ceil((user.depositLockUntil - Date.now()) / 60000);
+      message += `🔒 Locked: ${remaining} minutes remaining\n`;
+    }
+    
+    message += `Status: ${user.isOnline ? '🟢 Online' : '🔴 Offline'}\n`;
+    message += `Banned: ${user.banned ? '✅ Yes' : '❌ No'}\n`;
+    message += `Device ID: ${user.deviceId ? user.deviceId.substring(0,20) + '...' : 'N/A'}\n`;
+    message += `Last Login: ${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'N/A'}\n`;
+    message += `Created: ${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}`;
+    
+    alert(message);
+    
+  } catch(e){
+    console.error('View user details error:', e);
+    alert('❌ Error: ' + e.message);
+  }
+}
+
+// Close modal
+function closeModal(modalId){
+  document.getElementById(modalId).classList.remove('active');
+  
+  // Reset data
+  if(modalId === 'rejectDepositModal'){
+    currentRejectData = null;
+  } else if(modalId === 'editBalanceModal'){
+    currentEditUser = null;
+  } else if(modalId === 'sendMessageModal'){
+    currentMessageUser = null;
+  } else if(modalId === 'banUserModal'){
+    currentBanUser = null;
+  }
+}
 </script>
 
 </body>
