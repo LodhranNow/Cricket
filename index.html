@@ -615,27 +615,26 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   background: linear-gradient(135deg, rgba(251,191,36,0.34), rgba(251,191,36,0.24));
   box-shadow: 0 0 30px rgba(251,191,36,0.4);
 }
-
-/* Payment number display */
 .payment-number-display {
   background: rgba(8,10,18,0.65);
-  border: 1.5px solid rgba(255,255,255,.13);
+  border: 1.5px solid rgba(240,192,64,0.3);
+  border-radius: 8px;
   padding: 16px;
-  border-radius: 10px;
   margin: 12px 0;
   text-align: center;
 }
-.payment-number {
+.payment-number-display .number {
   font-family: 'Orbitron', sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: var(--neon-emerald);
+  color: var(--gold);
   letter-spacing: 2px;
   margin: 8px 0;
+  text-shadow: 0 0 8px rgba(240,192,64,0.3);
 }
-.copy-message {
-  font-size: 13px;
-  color: var(--gold);
+.payment-number-display .urdu-msg {
+  font-size: 14px;
+  color: var(--neon-emerald);
   direction: rtl;
   margin-top: 8px;
 }
@@ -799,16 +798,16 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   <div class="modal-content">
     <div class="modal-title">Deposit Request</div>
     
-    <!-- Payment Method Toggle -->
+    <!-- Payment Method Selection -->
     <div class="withdraw-toggle">
-      <button id="depTabJazz" class="active-tab" onclick="switchDepositTab('jazz')">JAZZCASH</button>
-      <button id="depTabEasy" onclick="switchDepositTab('easy')">EASYPAISA</button>
+      <button id="depTabJazz" class="active-tab" onclick="switchDepositMethod('jazz')">JazzCash</button>
+      <button id="depTabEasy" onclick="switchDepositMethod('easy')">Easypaisa</button>
     </div>
     
     <!-- Payment Number Display -->
-    <div id="depositPaymentInfo" class="payment-number-display">
-      <div class="payment-number" id="depositPaymentNumber">03266916283</div>
-      <div class="copy-message">نمبر کاپی کر کے ادائیگی کریں۔</div>
+    <div id="depositNumberDisplay" class="payment-number-display">
+      <div class="number" id="depositNumber">03266916283</div>
+      <div class="urdu-msg">نمبر کاپی کر کے ادائیگی کریں۔</div>
     </div>
     
     <!-- Amount Input -->
@@ -1849,34 +1848,28 @@ function showMessage(elId, text, type){
 }
 
 /* ═══════════════════════════════════════════════
-   SINGLE-STEP DEPOSIT SYSTEM (Same as Withdraw)
+   SIMPLE DEPOSIT SYSTEM (Like Withdraw)
    ═══════════════════════════════════════════════ */
 
 let currentDepositRequest = null;
 let depositMethod = 'jazz';
 let depositLockInterval = null;
 
-// Payment numbers
-const JAZZCASH_NUMBER = '03266916283';
-const EASYPAISA_NUMBER = '03193433587';
-
-function switchDepositTab(method){
+function switchDepositMethod(method){
   depositMethod = method;
   const tabJ = document.getElementById('depTabJazz');
   const tabE = document.getElementById('depTabEasy');
-  const numberEl = document.getElementById('depositPaymentNumber');
+  const numberEl = document.getElementById('depositNumber');
   
   if(method === 'jazz'){
     tabJ.classList.add('active-tab');
     tabJ.classList.remove('easy-active');
     tabE.classList.remove('active-tab','easy-active');
-    numberEl.textContent = JAZZCASH_NUMBER;
-    numberEl.style.color = 'var(--neon-emerald)';
+    numberEl.textContent = '03266916283';
   } else {
     tabE.classList.add('active-tab','easy-active');
     tabJ.classList.remove('active-tab');
-    numberEl.textContent = EASYPAISA_NUMBER;
-    numberEl.style.color = 'var(--neon-amber)';
+    numberEl.textContent = '03193433587';
   }
 }
 
@@ -1921,7 +1914,6 @@ async function checkDepositLock(){
 }
 
 async function updateDepositButtonState(){
-  // Hide all buttons
   document.getElementById('depositBtnNormal').style.display = 'none';
   document.getElementById('depositBtnPending').style.display = 'none';
   document.getElementById('depositBtnRejected').style.display = 'none';
@@ -1931,7 +1923,6 @@ async function updateDepositButtonState(){
   statusDiv.style.display = 'none';
   statusDiv.innerHTML = '';
   
-  // Check lock first
   const lockStatus = await checkDepositLock();
   if(lockStatus.locked){
     document.getElementById('depositBtnLocked').style.display = 'block';
@@ -1940,30 +1931,12 @@ async function updateDepositButtonState(){
     return;
   }
   
-  // Check if has pending request
   if(currentDepositRequest && currentDepositRequest.status === 'pending'){
     document.getElementById('depositBtnPending').style.display = 'block';
-    return;
+    showDepositMessage('Waiting for admin approval...', 'info');
+  } else {
+    document.getElementById('depositBtnNormal').style.display = 'block';
   }
-  
-  // Check if last request was rejected
-  const userSnap = await window.dbGet(window.dbRef(window.db, `users/${gameState.userPhone}`));
-  if(userSnap.exists()){
-    const user = userSnap.val();
-    const rejections = user.depositRejections || 0;
-    const lastRejectedAt = user.lastDepositRejectedAt || 0;
-    const now = Date.now();
-    
-    // Show rejection message if rejected within last 5 minutes
-    if(rejections > 0 && rejections < 3 && (now - lastRejectedAt) < 5 * 60 * 1000){
-      document.getElementById('depositBtnRejected').style.display = 'block';
-      showDepositMessage(`آپ کی ڈپازٹ درخواست مسترد کر دی گئی ہے۔<br><small>Rejections: ${rejections}/3</small>`, 'error');
-      return;
-    }
-  }
-  
-  // Show normal button
-  document.getElementById('depositBtnNormal').style.display = 'block';
 }
 
 function showDepositMessage(message, type){
@@ -1996,10 +1969,7 @@ function showDepositLockMessage(lockUntil){
   const remaining = Math.ceil((lockUntil - Date.now()) / 1000);
   const minutes = Math.floor(remaining / 60);
   const seconds = remaining % 60;
-  showDepositMessage(
-    `آپ کی ڈپازٹ درخواستیں بار بار مسترد ہو چکی ہیں، براہِ کرم 30 منٹ بعد دوبارہ کوشش کریں۔<br><br>⏰ <span id="depositLockTimer">${minutes}:${seconds.toString().padStart(2,'0')}</span>`,
-    'error'
-  );
+  showDepositMessage(`آپ کی ڈپازٹ درخواستیں بار بار مسترد ہو چکی ہیں، براہِ کرم 30 منٹ بعد دوبارہ کوشش کریں۔<br><br>⏰ <span id="depositLockTimer">${minutes}:${seconds.toString().padStart(2,'0')}</span>`, 'error');
 }
 
 function startDepositLockCountdown(lockUntil){
@@ -2023,34 +1993,18 @@ function startDepositLockCountdown(lockUntil){
 function openDepositModal(){
   playSound('click');
   document.getElementById('depositAmount').value = '';
-  switchDepositTab('jazz');
+  switchDepositMethod('jazz');
   document.getElementById('depositModal').classList.add('active');
 }
 
 async function submitDepositRequest(){
   playSound('click');
   const amount = parseInt(document.getElementById('depositAmount').value);
+  if(!amount || amount < 500){ playSound('error'); alert('Minimum deposit Rs 500'); return; }
   
-  if(!amount || amount < 500){
-    playSound('error');
-    alert('Minimum deposit Rs 500');
-    return;
-  }
-  
-  // Check lock
   const lockStatus = await checkDepositLock();
-  if(lockStatus.locked){
-    playSound('error');
-    alert(`You are locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`);
-    return;
-  }
-  
-  // Check if already has pending
-  if(currentDepositRequest){
-    playSound('error');
-    alert('You already have a pending deposit request');
-    return;
-  }
+  if(lockStatus.locked){ playSound('error'); alert(`Locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`); return; }
+  if(currentDepositRequest){ playSound('error'); alert('Already have pending deposit'); return; }
   
   try {
     const request = {
@@ -2062,49 +2016,26 @@ async function submitDepositRequest(){
       status: 'pending',
       timestamp: Date.now()
     };
-    
     const ref = window.dbPush(window.dbRef(window.db, 'depositRequests'));
     await window.dbSet(ref, request);
-    
     playSound('success');
     closeModal('depositModal');
-    
-  } catch(e){
-    console.error(e);
-    playSound('error');
-    alert('Error: ' + e.message);
-  }
+  } catch(e){ console.error(e); playSound('error'); alert('Error: ' + e.message); }
 }
 
 async function retryDeposit(){
   playSound('click');
-  
-  // Check lock
   const lockStatus = await checkDepositLock();
-  if(lockStatus.locked){
-    playSound('error');
-    alert(`You are locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`);
-    return;
-  }
-  
-  // Clear rejection message
-  document.getElementById('depositStatusMessages').style.display = 'none';
-  
-  // Open new deposit
+  if(lockStatus.locked){ playSound('error'); alert(`Locked for ${Math.ceil(lockStatus.remaining/60)} more minutes`); return; }
   openDepositModal();
 }
 
 function showDepositStatus(){
   playSound('click');
-  if(!currentDepositRequest){
-    alert('No active deposit request');
-    return;
-  }
-  
+  if(!currentDepositRequest){ alert('No pending deposit'); return; }
   const amount = currentDepositRequest.amount;
   const method = currentDepositRequest.paymentMethod === 'jazzcash' ? 'JazzCash' : 'Easypaisa';
   const date = new Date(currentDepositRequest.timestamp).toLocaleString();
-  
   alert(`Deposit Request\n\nAmount: Rs ${amount}\nMethod: ${method}\nDate: ${date}\n\nStatus: Pending\nWaiting for admin approval...`);
 }
 
