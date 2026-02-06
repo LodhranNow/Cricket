@@ -954,8 +954,135 @@ Object.values(sounds).forEach(sound => {
   sound.load();
 });
 
+// Background music system
+let audioCtx;
+let backgroundMusic = null;
+let musicGainNode = null;
+
+function initBackgroundMusic(){
+  if(backgroundMusic) return; // Already initialized
+  
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Create oscillators for ambient background music
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const osc3 = audioCtx.createOscillator();
+    
+    // Create gain nodes
+    const gain1 = audioCtx.createGain();
+    const gain2 = audioCtx.createGain();
+    const gain3 = audioCtx.createGain();
+    musicGainNode = audioCtx.createGain();
+    
+    // Set frequencies for a pleasant chord
+    osc1.type = 'sine';
+    osc1.frequency.value = 220; // A3
+    
+    osc2.type = 'sine';
+    osc2.frequency.value = 330; // E4
+    
+    osc3.type = 'triangle';
+    osc3.frequency.value = 440; // A4
+    
+    // Set individual oscillator volumes
+    gain1.gain.value = 0.08;
+    gain2.gain.value = 0.06;
+    gain3.gain.value = 0.04;
+    
+    // Master music volume at 50%
+    musicGainNode.gain.value = 0.5;
+    
+    // Connect audio graph
+    osc1.connect(gain1);
+    osc2.connect(gain2);
+    osc3.connect(gain3);
+    
+    gain1.connect(musicGainNode);
+    gain2.connect(musicGainNode);
+    gain3.connect(musicGainNode);
+    
+    musicGainNode.connect(audioCtx.destination);
+    
+    // Start oscillators
+    osc1.start();
+    osc2.start();
+    osc3.start();
+    
+    backgroundMusic = { osc1, osc2, osc3 };
+    
+    // Add subtle LFO modulation
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.3;
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 8;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfo.start();
+    
+  } catch(e) {
+    console.log('Background music init failed:', e);
+  }
+}
+
+// Play musical note on tile click/reveal
+function playMusicNote(frequency, duration = 0.15){
+  if(!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.value = frequency;
+    gain.gain.value = 0.25; // 50% volume
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {
+    console.log('Music note error:', e);
+  }
+}
+
+// Play explosion sound for mine
+function playExplosionSound(){
+  if(!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.value = 100;
+    filter.type = 'lowpass';
+    filter.frequency.value = 500;
+    gain.gain.value = 0.3; // 50% volume
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.stop(audioCtx.currentTime + 0.3);
+  } catch(e) {
+    console.log('Explosion sound error:', e);
+  }
+}
+
 function playSound(soundName){
   try {
+    // Initialize background music on first interaction
+    if(!backgroundMusic){
+      initBackgroundMusic();
+    }
+    
     if(sounds[soundName]){
       sounds[soundName].currentTime = 0;
       sounds[soundName].play().catch(e => console.log('Sound blocked:', e));
@@ -1676,11 +1803,15 @@ function clickTile(index){
 
   if(gameState.minePositions.includes(index)){
     playSound('mine');
+    playExplosionSound(); // Add explosion music
     tiles[index].textContent = '💣';
     tiles[index].classList.add('revealed','mine','mine-hit');
     gameOver(false);
   } else {
     playSound('success');
+    // Play ascending musical note based on tile position
+    const notes = [523, 587, 659, 698, 784, 880, 988, 1047]; // C5 to C6 scale
+    playMusicNote(notes[gameState.revealedTiles.length % notes.length]);
     tiles[index].textContent = '💎';
     tiles[index].classList.add('revealed','safe');
     gameState.currentWin += Math.floor(gameState.currentBet * getWinRate());
