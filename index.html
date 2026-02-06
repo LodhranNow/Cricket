@@ -407,6 +407,89 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 }
 
 /* ═══════════════════════════════════════════════
+   GAME ACTION BUTTONS (NEW LAYOUT)
+   ═══════════════════════════════════════════════ */
+.game-action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.game-btn-left, .game-btn-right {
+  padding: 15px 10px;
+  border-radius: var(--radius-sm);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s, box-shadow .25s, background .22s;
+  text-transform: uppercase;
+  text-align: center;
+  width: 100%;
+}
+
+.game-btn-left:hover:not(:disabled),
+.game-btn-right:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.game-btn-left:active:not(:disabled),
+.game-btn-right:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.game-btn-left:disabled,
+.game-btn-right:disabled {
+  opacity: .38;
+  cursor: not-allowed;
+}
+
+/* Left side buttons (GREEN like Deposit) */
+.game-btn-left {
+  background: rgba(52,211,153,.18);
+  border: 1.5px solid rgba(52,211,153,.55);
+  color: var(--neon-emerald);
+  box-shadow: 0 0 12px rgba(52,211,153,.18), inset 0 1px 0 rgba(52,211,153,.14);
+}
+
+.game-btn-left:hover:not(:disabled) {
+  box-shadow: 0 0 24px rgba(52,211,153,.4);
+  background: rgba(52,211,153,.26);
+}
+
+.game-btn-left:active:not(:disabled) {
+  background: rgba(52,211,153,.34);
+}
+
+/* Right side buttons (ORANGE like Withdraw) */
+.game-btn-right {
+  background: rgba(251,191,36,.15);
+  border: 1.5px solid rgba(251,191,36,.5);
+  color: var(--neon-amber);
+  box-shadow: 0 0 12px rgba(251,191,36,.15);
+}
+
+.game-btn-right:hover:not(:disabled) {
+  box-shadow: 0 0 24px rgba(251,191,36,.35);
+  background: rgba(251,191,36,.24);
+}
+
+.game-btn-right:active:not(:disabled) {
+  background: rgba(251,191,36,.32);
+}
+
+/* Specific button styles within the grid */
+#cashoutBtn { grid-column: 1; grid-row: 1; }
+#resetBtn { grid-column: 1; grid-row: 2; }
+#betBtn { grid-column: 2; grid-row: 1; }
+#minesBtn { grid-column: 2; grid-row: 2; }
+
+/* ═══════════════════════════════════════════════
    KICKED OVERLAY
    ═══════════════════════════════════════════════ */
 .kicked-overlay {
@@ -590,6 +673,7 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   .modal-content  { padding:22px 16px; }
   .payment-number-display .number { font-size:17px; }
   .pending-amount { font-size:18px; }
+  .game-btn-left, .game-btn-right { font-size:14px; padding:12px 8px; }
 }
 </style>
 </head>
@@ -668,10 +752,16 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 
   <div class="grid" id="gameGrid"></div>
 
-  <button class="btn-blue"  onclick="openBetModal()">Bet Rs <span id="betDisplay">0</span></button>
-  <button class="btn-red"   onclick="openMinesModal()">💣 Mines: <span id="minesDisplay">3</span></button>
-  <button class="btn-gold"  id="cashoutBtn" onclick="cashout()" disabled>Cash Out</button>
-  <button class="btn-reset" onclick="resetGame()">🔄 Reset</button>
+  <!-- NEW GAME ACTION BUTTONS LAYOUT -->
+  <div class="game-action-buttons">
+    <!-- Left side - Green buttons -->
+    <button class="game-btn-left" id="cashoutBtn" onclick="cashout()" disabled>CASHOUT</button>
+    <button class="game-btn-left" id="resetBtn" onclick="resetGame()">RESET</button>
+    
+    <!-- Right side - Orange buttons -->
+    <button class="game-btn-right" id="betBtn" onclick="openBetModal()">BET RS <span id="betDisplay">0</span></button>
+    <button class="game-btn-right" id="minesBtn" onclick="openMinesModal()">💣 MINES: <span id="minesDisplay">3</span></button>
+  </div>
 </div>
 
 </div><!-- /page-wrap -->
