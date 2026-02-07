@@ -102,13 +102,14 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════
-   HEADER CARD
+   HEADER CARD - User info + Logout button
    ═══════════════════════════════════════════════ */
 .header-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 20px;
+  min-height: 80px;
 }
 
 .user-info {
@@ -117,36 +118,39 @@ html, body {
 
 .user-name {
   font-family: 'Orbitron', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--gold);
   letter-spacing: 1px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   text-shadow: 0 0 10px rgba(240,192,64,0.3);
 }
 
 .user-phone {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-muted);
   font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════════
-   LOGOUT BUTTON
+   LOGOUT BUTTON - Touch-friendly
    ═══════════════════════════════════════════════ */
 .logout-btn {
   background: rgba(251,113,133,0.1);
   border: 1.5px solid rgba(251,113,133,0.3);
   color: var(--neon-rose);
-  padding: 10px 18px;
+  padding: 12px 20px;
   border-radius: var(--radius-sm);
   font-family: 'Rajdhani', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.25s ease;
   text-transform: uppercase;
+  min-height: 48px;
+  min-width: 100px;
+  touch-action: manipulation;
 }
 
 .logout-btn:hover {
@@ -156,20 +160,20 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════
-   ACTION CARD
+   ACTION CARD - Deposit & Withdraw buttons (equal size)
    ═══════════════════════════════════════════════ */
 .action-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 16px;
   padding: 20px;
 }
 
 .action-btn {
-  padding: 18px 12px;
+  padding: 20px 12px;
   border-radius: var(--radius-md);
   font-family: 'Rajdhani', sans-serif;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 1.2px;
   cursor: pointer;
@@ -179,6 +183,8 @@ html, body {
   text-align: center;
   position: relative;
   overflow: hidden;
+  min-height: 64px;
+  touch-action: manipulation;
 }
 
 .action-btn:disabled {
@@ -222,13 +228,13 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════
-   STATS CARD
+   STATS CARD - Balance & Current Win in clear typography
    ═══════════════════════════════════════════════ */
 .stats-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  padding: 20px;
+  gap: 24px;
+  padding: 24px;
 }
 
 .stat-item {
@@ -236,34 +242,35 @@ html, body {
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   letter-spacing: 2px;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   font-weight: 600;
 }
 
 .stat-value {
   font-family: 'Orbitron', sans-serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--gold);
   text-shadow: 0 0 12px rgba(240,192,64,0.4);
+  line-height: 1.2;
 }
 
 /* ═══════════════════════════════════════════════
-   GAME GRID CARD
+   GAME GRID CARD - 5x5 mines tiles as visual focus
    ═══════════════════════════════════════════════ */
 .game-grid-card {
-  padding: 24px;
+  padding: 28px 24px;
 }
 
 .grid-title {
   font-family: 'Orbitron', sans-serif;
-  font-size: 24px;
+  font-size: 26px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   color: var(--gold);
   letter-spacing: 3px;
   text-transform: uppercase;
@@ -272,25 +279,27 @@ html, body {
 .grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 10px;
   margin: 0 auto;
-  max-width: 320px;
+  max-width: 340px;
 }
 
 .tile {
   aspect-ratio: 1;
   background: linear-gradient(145deg, rgba(28,34,56,0.9), rgba(18,22,40,0.95));
   border: 1.5px solid rgba(255,255,255,0.1);
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
   position: relative;
   overflow: hidden;
   user-select: none;
+  min-height: 56px;
+  touch-action: manipulation;
 }
 
 .tile:not(.revealed):hover {
@@ -328,20 +337,21 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════
-   CONTROL CARD
+   CONTROL CARD - 2×2 grid of game action buttons
    ═══════════════════════════════════════════════ */
 .control-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 20px;
+  grid-template-rows: auto auto;
+  gap: 14px;
+  padding: 24px;
 }
 
 .control-btn {
-  padding: 16px 10px;
+  padding: 20px 12px;
   border-radius: var(--radius-md);
   font-family: 'Rajdhani', sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 1px;
   cursor: pointer;
@@ -350,6 +360,8 @@ html, body {
   text-align: center;
   position: relative;
   overflow: hidden;
+  min-height: 64px;
+  touch-action: manipulation;
 }
 
 .control-btn:disabled {
@@ -424,12 +436,77 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════
+   MESSAGE BOX CARD - For admin messages
+   ═══════════════════════════════════════════════ */
+.message-box-card {
+  padding: 20px;
+  display: none;
+}
+
+.message-box-card.active {
+  display: block;
+  animation: slideUp 0.4s ease-out;
+}
+
+.message-box-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.message-icon {
+  font-size: 22px;
+  color: var(--neon-cyan);
+}
+
+.message-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  letter-spacing: 1px;
+}
+
+.message-content {
+  background: rgba(8, 10, 18, 0.6);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  min-height: 80px;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.message-timestamp {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 12px;
+  direction: rtl;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════
    PENDING STATUS CARDS
    ═══════════════════════════════════════════════ */
 .pending-card {
   display: none;
   padding: 16px;
-  margin-top: -8px;
+  margin-top: 16px;
   border-top: 1px solid rgba(255,255,255,0.05);
 }
 
@@ -626,6 +703,7 @@ html, body {
   cursor: pointer;
   transition: all 0.25s ease;
   text-transform: uppercase;
+  min-height: 56px;
 }
 
 .login-btn:hover {
@@ -698,6 +776,7 @@ html, body {
   color: var(--text-primary);
   outline: none;
   transition: all 0.25s ease;
+  min-height: 52px;
 }
 
 .modal-input:focus {
@@ -718,6 +797,7 @@ html, body {
   border: none;
   transition: all 0.25s ease;
   text-transform: uppercase;
+  min-height: 52px;
 }
 
 .modal-btn:hover {
@@ -764,19 +844,27 @@ html, body {
   }
   
   .user-name {
-    font-size: 16px;
+    font-size: 18px;
   }
   
   .stat-value {
-    font-size: 24px;
+    font-size: 28px;
+  }
+  
+  .action-btn,
+  .control-btn {
+    padding: 18px 10px;
+    font-size: 15px;
+    min-height: 56px;
   }
   
   .grid {
-    gap: 6px;
+    gap: 8px;
   }
   
   .tile {
-    font-size: 20px;
+    min-height: 48px;
+    font-size: 22px;
   }
   
   .login-title {
@@ -792,16 +880,22 @@ html, body {
 @media (max-width: 350px) {
   .action-btn,
   .control-btn {
-    font-size: 13px;
-    padding: 14px 8px;
+    font-size: 14px;
+    padding: 16px 8px;
+    min-height: 52px;
   }
   
   .grid {
-    gap: 4px;
+    gap: 6px;
   }
   
   .tile {
-    font-size: 18px;
+    min-height: 44px;
+    font-size: 20px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
   }
 }
 
@@ -871,7 +965,7 @@ html, body {
 <!-- Game Screen -->
 <div id="gameScreen" class="main-container hidden">
   
-  <!-- Header Card -->
+  <!-- Header Card: User info + Logout button -->
   <div class="card header-card">
     <div class="user-info">
       <div class="user-name" id="displayName">Guest Player</div>
@@ -880,7 +974,7 @@ html, body {
     <button class="logout-btn" onclick="handleLogout()">Logout</button>
   </div>
   
-  <!-- Action Card -->
+  <!-- Action Card: Deposit & Withdraw buttons (equal size) -->
   <div class="card">
     <div class="action-card">
       <button id="depositBtn" class="action-btn deposit-btn" onclick="openDepositModal()">DEPOSIT</button>
@@ -914,7 +1008,7 @@ html, body {
     </div>
   </div>
   
-  <!-- Stats Card -->
+  <!-- Stats Card: Balance & Current Win in clear typography -->
   <div class="card stats-card">
     <div class="stat-item">
       <div class="stat-label">Balance</div>
@@ -926,21 +1020,33 @@ html, body {
     </div>
   </div>
   
-  <!-- Game Grid Card -->
+  <!-- Game Grid Card: 5x5 mines tiles as visual focus -->
   <div class="card game-grid-card">
     <div class="grid-title">MINES GAME</div>
     <div class="grid" id="gameGrid"></div>
   </div>
   
-  <!-- Control Card -->
+  <!-- Control Card: 2×2 grid of game action buttons -->
   <div class="card control-card">
-    <!-- Left Column -->
+    <!-- First Row -->
     <button id="cashoutBtn" class="control-btn control-left" onclick="cashout()" disabled>CASHOUT</button>
-    <button id="resetBtn" class="control-btn control-left" onclick="resetGame()">RESET</button>
-    
-    <!-- Right Column -->
     <button id="betBtn" class="control-btn control-right" onclick="openBetModal()">BET RS <span id="betDisplay">0</span></button>
+    
+    <!-- Second Row -->
+    <button id="resetBtn" class="control-btn control-left" onclick="resetGame()">RESET</button>
     <button id="minesBtn" class="control-btn control-right" onclick="openMinesModal()">💣 MINES: <span id="minesDisplay">3</span></button>
+  </div>
+  
+  <!-- Message Box Card: For admin messages -->
+  <div id="messageBoxCard" class="card message-box-card">
+    <div class="message-box-header">
+      <span class="message-icon">📨</span>
+      <span class="message-title">Admin Message</span>
+    </div>
+    <div class="message-content" id="adminMessageContent">
+      No messages from admin.
+    </div>
+    <div class="message-timestamp" id="adminMessageTimestamp"></div>
   </div>
 </div>
 
@@ -1068,6 +1174,7 @@ let gameState = {
 let depositMethod = 'jazz';
 let withdrawMethod = 'jazz';
 let depositLockTimer = null;
+let messageListener = null;
 
 // Sound Effects
 const sounds = {
@@ -1192,6 +1299,59 @@ function listenToUserData(phone) {
   });
 }
 
+// Message System
+function listenToAdminMessages() {
+  if (messageListener) {
+    messageListener(); // Remove previous listener
+  }
+  
+  messageListener = window.dbOnValue(window.dbRef(window.db, 'adminMessages'), snapshot => {
+    if (!snapshot.exists()) return;
+    
+    const messages = [];
+    snapshot.forEach(child => {
+      const msg = child.val();
+      if (msg.active && (!msg.targetUser || msg.targetUser === gameState.userPhone)) {
+        messages.push(msg);
+      }
+    });
+    
+    // Sort by timestamp (newest first)
+    messages.sort((a, b) => b.timestamp - a.timestamp);
+    
+    const messageBoxCard = document.getElementById('messageBoxCard');
+    const messageContent = document.getElementById('adminMessageContent');
+    const messageTimestamp = document.getElementById('adminMessageTimestamp');
+    
+    if (messages.length > 0) {
+      const latestMessage = messages[0];
+      messageContent.textContent = latestMessage.message;
+      
+      // Format timestamp
+      const date = new Date(latestMessage.timestamp);
+      messageTimestamp.textContent = `Received: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+      
+      // Show message box with animation
+      messageBoxCard.classList.add('active');
+      
+      // Auto-hide after 30 seconds for general messages
+      if (!latestMessage.targetUser) {
+        setTimeout(() => {
+          messageBoxCard.classList.remove('active');
+        }, 30000);
+      }
+    } else {
+      messageContent.textContent = 'No messages from admin.';
+      messageTimestamp.textContent = '';
+      messageBoxCard.classList.remove('active');
+    }
+  });
+}
+
+function closeMessageBox() {
+  document.getElementById('messageBoxCard').classList.remove('active');
+}
+
 // Login System
 async function handleLogin() {
   playSound('click');
@@ -1288,6 +1448,7 @@ async function handleLogin() {
     listenToUserData(phone);
     listenToDepositRequests();
     listenToWithdrawRequests();
+    listenToAdminMessages(); // Start listening to messages
     initializeGrid();
     updateDisplay();
     updateDepositButtonState();
@@ -1311,6 +1472,11 @@ function handleLogout() {
         isOnline: false,
         deviceId: null
       });
+      
+      if (messageListener) {
+        messageListener();
+        messageListener = null;
+      }
     } catch (e) { }
     
     if (depositLockTimer) clearInterval(depositLockTimer);
@@ -1990,8 +2156,9 @@ async function submitWithdraw() {
 
 // Initialize game when page loads
 window.addEventListener('DOMContentLoaded', () => {
-  // Check if user is already logged in (for demo purposes)
-  // In production, you would check Firebase for existing session
+  // Add click event to message box to close it
+  document.getElementById('messageBoxCard').addEventListener('click', closeMessageBox);
+  
   console.log('Mines Game - Card Edition loaded');
 });
 </script>
