@@ -798,8 +798,8 @@ button:disabled { opacity:.38; cursor:not-allowed; }
     
     <!-- Payment Method Toggle (Same as Withdraw) -->
     <div class="request-toggle">
-      <button id="depTabJazz" class="active-tab" onclick="switchDepositMethod('jazz')">JazzCash</button>
-      <button id="depTabEasy" onclick="switchDepositMethod('easy')">Easypaisa</button>
+      <button id="depTabJazz" class="active-tab" onclick="switchDepositMethod('jazzcash')">JazzCash</button>
+      <button id="depTabEasy" onclick="switchDepositMethod('easypaisa')">Easypaisa</button>
     </div>
     
     <!-- Payment Number Display (Non-editable, Copy Only) -->
@@ -1062,7 +1062,7 @@ let gameState = {
 /* ─── Sound Effects ─── */
 const sounds = {
   click: new Audio('data:audio/wav;base64,UklGRhIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU4AAAB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/'),
-  success: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWAAAAB/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/'),
+  success: new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWAAAAB/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/gH+Af4B/'),
   error: new Audio('data:audio/wav;base64,UklGRh4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAf39/gICAf39/gIB/f39/f4CAf39/gH+Af4B/gH+Af39/f3+Af4B/gH+Af39/'),
   win: new Audio('data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YW4AAAB/gICAgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpI='),
   mine: new Audio('data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWIAAACAfn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+')
@@ -1237,7 +1237,7 @@ function getWinRate(){ return WIN_RATES[gameState.minesCount] || 0.10; }
    DEPOSIT SYSTEM (Mirror of Withdraw System)
    ═══════════════════════════════════════════════ */
 
-let depositMethod = 'jazz';
+let depositMethod = 'jazzcash';
 let depositLockTimer = null;
 
 // Deposit method switching
@@ -1250,13 +1250,13 @@ function switchDepositMethod(method){
   const displayEl = document.getElementById('depositNumberDisplay');
   const instructionEl = document.getElementById('depositInstruction');
   
-  if(method === 'jazz'){
+  if(method === 'jazzcash'){
     tabJ.classList.add('active-tab');
     tabJ.classList.remove('easy-active');
     tabE.classList.remove('active-tab','easy-active');
     numberEl.textContent = '03266916283';
     displayEl.className = 'payment-number-display jazzcash';
-    instructionEl.textContent = 'JazzCash کے ذریعے ادائیگی کرنے کا طریقہ:\nاوپر دی گئی Till ID کو کاپی کریں۔\nJazzCash ایپ کھولیں اور بالکل نیچے موجود درمیانی لال بٹن (JazzCash) پر کلک کریں۔\nاس کے بعد Enter Till ID پر کلک کریں، کاپی کی ہوئی Till ID درج کریں اور ادائیگی مکمل کریں۔';
+    instructionEl.textContent = 'JazzCash کے ذریعے ادائیگی کرنے کا طریقہ:\nاوپر دی گئی Till ID پر کلک کریں گے تو Till ID کاپی ہو جائے گی۔\nJazzCash ایپ کھولیں اور بالکل نیچے موجود درمیانی لال بٹن پر کلک کریں۔\nاس کے بعد Enter Till ID پر کلک کریں، کاپی کی ہوئی Till ID درج کریں اور ادائیگی مکمل کریں۔';
   } else {
     tabE.classList.add('active-tab','easy-active');
     tabJ.classList.remove('active-tab');
@@ -1417,7 +1417,7 @@ function listenToDepositRequests(){
 // Open deposit modal
 async function openDepositModal(){
   // Reset form
-  switchDepositMethod('jazz');
+  switchDepositMethod('jazzcash');
   document.getElementById('depositAmount').value = '';
   
   // Check lock status
@@ -1440,7 +1440,7 @@ async function submitDeposit(){
   playButtonMusic();
   
   const amount = parseInt(document.getElementById('depositAmount').value);
-  const method = depositMethod === 'jazz' ? 'jazzcash' : 'easypaisa';
+  const method = depositMethod; // Already 'jazzcash' or 'easypaisa'
   
   // Validation
   if(!amount || amount < 500){
