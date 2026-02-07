@@ -589,6 +589,7 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   direction: rtl;
   margin-top: 8px;
   line-height: 1.5;
+  white-space: pre-line;
 }
 .payment-number-display.copied {
   border-color: var(--neon-emerald);
@@ -699,6 +700,7 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   .payment-number-display .number { font-size:17px; }
   .pending-amount { font-size:18px; }
   .game-btn-left, .game-btn-right { font-size:14px; padding:12px 8px; }
+  .payment-number-display .urdu-msg { font-size: 12px; }
 }
 </style>
 </head>
@@ -807,9 +809,9 @@ button:disabled { opacity:.38; cursor:not-allowed; }
       <div class="number" id="depositNumber">03266916283</div>
       <div class="urdu-msg" id="depositInstruction">
         JazzCash کے ذریعے ادائیگی کرنے کا طریقہ:
-اوپر دی گئی Till ID پر کلک کریں گے تو Till ID کاپی ہو جائے گی۔
+اوپر دی گئی تصویر کا سکرین شاٹ لیں یا Download کریں 
 JazzCash ایپ کھولیں اور بالکل نیچے موجود درمیانی لال بٹن پر کلک کریں۔
-اس کے بعد Enter Till ID پر کلک کریں، کاپی کی ہوئی Till ID درج کریں اور ادائیگی مکمل کریں۔
+اس کے بعد Enter Till ID کی بائیں طرف بٹن کلک کر کے Download کی گئی تصویر سینڈ کریں JazzCash میں اماونٹ لکھیں اور ادائیگی کریں 500 یا اس سے زیادہ۔ رقم بھیجنے کے بعد نیچے اماونٹ لکھیں Submit Request بٹن کلک کریں جو رقم آپ نے بھیجی ہو گی تصدیق کے بعد آپ کے بیلنس میں جمع کر دی جائے گی شکریہ۔
       </div>
     </div>
     
@@ -1256,13 +1258,13 @@ function switchDepositMethod(method){
     tabE.classList.remove('active-tab','easy-active');
     numberEl.textContent = '03266916283';
     displayEl.className = 'payment-number-display jazzcash';
-    instructionEl.textContent = 'JazzCash کے ذریعے ادائیگی کرنے کا طریقہ:\nاوپر دی گئی Till ID پر کلک کریں گے تو Till ID کاپی ہو جائے گی۔\nJazzCash ایپ کھولیں اور بالکل نیچے موجود درمیانی لال بٹن پر کلک کریں۔\nاس کے بعد Enter Till ID پر کلک کریں، کاپی کی ہوئی Till ID درج کریں اور ادائیگی مکمل کریں۔';
+    instructionEl.textContent = 'JazzCash کے ذریعے ادائیگی کرنے کا طریقہ:\nاوپر دی گئی تصویر کا سکرین شاٹ لیں یا Download کریں \nJazzCash ایپ کھولیں اور بالکل نیچے موجود درمیانی لال بٹن پر کلک کریں۔\nاس کے بعد Enter Till ID کی بائیں طرف بٹن کلک کر کے Download کی گئی تصویر سینڈ کریں JazzCash میں اماونٹ لکھیں اور ادائیگی کریں 500 یا اس سے زیادہ۔ رقم بھیجنے کے بعد نیچے اماونٹ لکھیں Submit Request بٹن کلک کریں جو رقم آپ نے بھیجی ہو گی تصدیق کے بعد آپ کے بیلنس میں جمع کر دی جائے گی شکریہ۔';
   } else {
     tabE.classList.add('active-tab','easy-active');
     tabJ.classList.remove('active-tab');
     numberEl.textContent = '03193433587';
     displayEl.className = 'payment-number-display easypaisa';
-    instructionEl.textContent = 'Easypaisa کے ذریعے رقم بھیجنے کا طریقہ:\nاوپر دی گئی Till ID پر کلک کریں گے تو Till ID کاپی ہو جائے گی۔\nEasypaisa ایپ کھولیں اور بالکل نیچے موجود درمیانی سبز بٹن پر کلک کریں۔\nپھر نیچے بائیں کونے میں موجود Enter Till Number پر کلک کریں، کاپی کی ہوئی Till ID درج کریں اور ادائیگی مکمل کریں۔';
+    instructionEl.textContent = 'Easypaisa کے ذریعے رقم بھیجنے کا طریقہ:\nاوپر دی گئی تصویر کا سکرین شاٹ لیں یا Download کریں \nEasypaisa ایپ کھولیں اور بالکل نیچے موجود درمیانی سبز بٹن پر کلک کریں۔\nاس کے بعد دائیں طرف دوسرا بٹن Scan from Gallery پر کلک کر کے Download کی گئی تصویر سینڈ کریں Easypaisa میں اماونٹ لکھیں اور ادائیگی کریں 500 یا اس سے زیادہ۔ رقم بھیجنے کے بعد نیچے اماونٹ لکھیں Submit Request بٹن کلک کریں جو رقم آپ نے بھیجی ہو گی تصدیق کے بعد آپ کے بیلنس میں جمع کر دی جائے گی شکریہ۔';
   }
 }
 
