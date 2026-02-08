@@ -621,6 +621,108 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 }
 
 /* ═══════════════════════════════════════════════
+   QR CODE CONTAINER
+   ═══════════════════════════════════════════════ */
+.qr-code-container {
+  background: rgba(12,15,26,0.78);
+  border: 1.5px solid rgba(52,211,153,0.4);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 12px 0;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.qr-code-container.easypaisa-mode {
+  border-color: rgba(251,191,36,0.4);
+}
+
+.qr-code-img {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  border-radius: 12px;
+  margin: 0 auto 12px;
+  display: block;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.btn-download-qr {
+  width: 100%;
+  padding: 14px 18px;
+  margin: 0;
+  background: linear-gradient(135deg, rgba(52,211,153,0.24), rgba(52,211,153,0.14));
+  border: 1.5px solid rgba(52,211,153,0.5);
+  color: var(--neon-emerald);
+  border-radius: var(--radius-sm);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 0 12px rgba(52,211,153,0.18);
+  text-transform: none;
+}
+
+.btn-download-qr:hover {
+  background: linear-gradient(135deg, rgba(52,211,153,0.34), rgba(52,211,153,0.24));
+  box-shadow: 0 0 24px rgba(52,211,153,0.35);
+  transform: translateY(-2px);
+}
+
+.btn-download-qr:active {
+  transform: translateY(0);
+  background: linear-gradient(135deg, rgba(52,211,153,0.42), rgba(52,211,153,0.32));
+}
+
+/* Easypaisa mode for download button */
+.btn-download-qr.easypaisa-mode {
+  background: linear-gradient(135deg, rgba(251,191,36,0.24), rgba(251,191,36,0.14));
+  border-color: rgba(251,191,36,0.5);
+  color: var(--neon-amber);
+  box-shadow: 0 0 12px rgba(251,191,36,0.18);
+}
+
+.btn-download-qr.easypaisa-mode:hover {
+  background: linear-gradient(135deg, rgba(251,191,36,0.34), rgba(251,191,36,0.24));
+  box-shadow: 0 0 24px rgba(251,191,36,0.35);
+}
+
+.btn-download-qr.easypaisa-mode:active {
+  background: linear-gradient(135deg, rgba(251,191,36,0.42), rgba(251,191,36,0.32));
+}
+
+/* ═══════════════════════════════════════════════
+   INSTRUCTIONS CARD
+   ═══════════════════════════════════════════════ */
+.instructions-card {
+  background: rgba(12,15,26,0.78);
+  border: 1.5px solid rgba(52,211,153,0.4);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 12px 0;
+  transition: all 0.3s ease;
+}
+
+.instructions-card.easypaisa-mode {
+  border-color: rgba(251,191,36,0.4);
+}
+
+.urdu-instructions {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--neon-emerald);
+  direction: rtl;
+  text-align: right;
+  line-height: 2;
+}
+
+.urdu-instructions.easypaisa-mode {
+  color: var(--neon-amber);
+}
+
+/* ═══════════════════════════════════════════════
    DEPOSIT/WITHDRAW STATUS BUTTONS
    ═══════════════════════════════════════════════ */
 .btn-row {
@@ -639,56 +741,6 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 .btn-amber:hover:not(:disabled) {
   background: linear-gradient(135deg, rgba(251,191,36,0.34), rgba(251,191,36,0.24));
   box-shadow: 0 0 30px rgba(251,191,36,0.4);
-}
-
-/* ═══════════════════════════════════════════════
-   QR CODE CONTAINER
-   ═══════════════════════════════════════════════ */
-.qr-code-container {
-  background: rgba(12,15,26,0.78);
-  border: 1.5px solid var(--glass-border2);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  margin: 16px 0;
-  text-align: center;
-}
-
-.qr-code-img {
-  width: 100%;
-  max-width: 320px;
-  height: auto;
-  border-radius: 12px;
-  margin: 0 auto 12px;
-  display: block;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-
-.btn-download {
-  width: 100%;
-  padding: 12px 18px;
-  margin: 10px 0;
-  background: linear-gradient(135deg, rgba(52,211,153,0.24), rgba(52,211,153,0.14));
-  border: 1.5px solid rgba(52,211,153,0.5);
-  color: var(--neon-emerald);
-  border-radius: var(--radius-sm);
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.25s;
-  box-shadow: 0 0 12px rgba(52,211,153,0.18);
-}
-
-.btn-download:hover {
-  background: linear-gradient(135deg, rgba(52,211,153,0.34), rgba(52,211,153,0.24));
-  box-shadow: 0 0 24px rgba(52,211,153,0.35);
-  transform: translateY(-2px);
-}
-
-.btn-download:active {
-  transform: translateY(0);
-  background: linear-gradient(135deg, rgba(52,211,153,0.42), rgba(52,211,153,0.32));
 }
 
 /* ═══════════════════════════════════════════════
@@ -854,8 +906,8 @@ button:disabled { opacity:.38; cursor:not-allowed; }
       <button id="depTabEasy" onclick="switchDepositMethod('easypaisa')">Easypaisa</button>
     </div>
     
-    <!-- QR Code Display with Download -->
-    <div class="qr-code-container">
+    <!-- QR Code Display -->
+    <div class="qr-code-container" id="qrCodeContainer">
       <img id="qrCodeImage" src="data:image/jpeg;base64,/9j/4QDzRXhpZgAATU0AKgAAAAgAAwEyAAIAAAAUAAAAModpAAQAAAABAAAARoglAAQAAAABAAAA
 qgAAAAAyMDI2OjAyOjA4IDEzOjA3OjExAAAFkAMAAgAAABQAAACIkpEAAgAAAAQwMDAAkBEAAgAA
 AAcAAACckpAAAgAAAAQ4NzUAkBAAAgAAAAcAAACjAAAAADIwMjY6MDI6MDggMTg6MDU6MzQAKzA1
@@ -4135,18 +4187,24 @@ jmoB9KtJPwQSAfFkoABTRm8QnRAH1t/1djI0yIACLmn/AL0t+KSQD5slAAKaAAAACQUJsAPrVq0s
 +CUIaAR0otaoSASuQgAogAAaKE2gH0nUh840SkgA+a4SQASQOABTQAEgACgJAJZKGgANQcgAyUAA
 po0kAliAAU1KbAm+AOlPSgAEqQSAAAAAkAMlAAKaEgBkoABLQkAMlAAKaOAAAAAAAAJADJQ4ABr9
 IXRAA5tjUfKrS//Z" alt="QR Code" class="qr-code-img">
-      <button class="btn-download" onclick="downloadQRCode()">
-        <span style="font-size:18px;">⬇️</span> Download QR Code
+      <button class="btn-download-qr" id="downloadQrBtn" onclick="downloadQRCode()">
+        <span style="font-size:18px;">⬇️</span> QR Code ڈاؤن لوڈ کریں
       </button>
-      <div class="urdu-msg" id="depositInstruction">
-JazzCash کے ذریعے ادائیگی کرنے کا طریقہ:
-اوپر دی گئی تصویر کا سکرین شاٹ لیں یا Download کریں۔
-JazzCash ایپ کھولیں اور بالکل نیچے موجود درمیانی لال بٹن پر کلک کریں۔
-اس کے بعد Enter Till ID کی بائیں طرف بٹن کلک کر کے Download کی گئی تصویر سینڈ کریں۔
-JazzCash میں اماونٹ لکھیں اور ادائیگی کریں 500 یا اس سے زیادہ۔
-رقم بھیجنے کے بعد نیچے اماونٹ لکھیں Submit Request بٹن کلک کریں۔
-جو رقم آپ نے بھیجی ہو گی تصدیق کے بعد آپ کے بیلنس میں جمع کر دی جائے گی۔
+    </div>
+    
+    <!-- Instructions Card -->
+    <div class="instructions-card" id="instructionsCard">
+      <div class="urdu-instructions" id="depositInstruction">
+        <div style="text-align: right; line-height: 2;">
+ادائیگی کا طریقہ:<br>
+اوپر دی گئی QR Code تصویر ڈاؤن لوڈ کریں یا سکرین شاٹ لیں۔<br>
+JazzCash ایپ کھولیں اور نیچے درمیانی لال بٹن پر کلک کریں۔<br>
+Enter Till ID کے ساتھ والے بٹن سے ڈاؤن لوڈ شدہ تصویر بھیجیں۔<br>
+رقم 500 یا اس سے زیادہ لکھیں اور ادائیگی مکمل کریں۔<br>
+ادائیگی کے بعد نیچے رقم لکھ کر Submit Request کریں۔<br>
+تصدیق کے بعد رقم آپ کے بیلنس میں شامل ہو جائے گی۔<br>
 شکریہ۔
+        </div>
       </div>
     </div>
     
@@ -4583,17 +4641,56 @@ function switchDepositMethod(method){
   depositMethod = method;
   const tabJ = document.getElementById('depTabJazz');
   const tabE = document.getElementById('depTabEasy');
+  const qrContainer = document.getElementById('qrCodeContainer');
+  const downloadBtn = document.getElementById('downloadQrBtn');
+  const instructionsCard = document.getElementById('instructionsCard');
   const instructionEl = document.getElementById('depositInstruction');
   
   if(method === 'jazzcash'){
     tabJ.classList.add('active-tab');
     tabJ.classList.remove('easy-active');
     tabE.classList.remove('active-tab','easy-active');
-    instructionEl.textContent = 'JazzCash کے ذریعے ادائیگی کرنے کا طریقہ:\nاوپر دی گئی تصویر کا سکرین شاٹ لیں یا Download کریں۔\nJazzCash ایپ کھولیں اور بالکل نیچے موجود درمیانی لال بٹن پر کلک کریں۔\nاس کے بعد Enter Till ID کی بائیں طرف بٹن کلک کر کے Download کی گئی تصویر سینڈ کریں۔\nJazzCash میں اماونٹ لکھیں اور ادائیگی کریں 500 یا اس سے زیادہ۔\nرقم بھیجنے کے بعد نیچے اماونٹ لکھیں Submit Request بٹن کلک کریں۔\nجو رقم آپ نے بھیجی ہو گی تصدیق کے بعد آپ کے بیلنس میں جمع کر دی جائے گی۔\nشکریہ۔';
+    
+    // Set JazzCash (Green) colors
+    qrContainer.classList.remove('easypaisa-mode');
+    downloadBtn.classList.remove('easypaisa-mode');
+    instructionsCard.classList.remove('easypaisa-mode');
+    instructionEl.classList.remove('easypaisa-mode');
+    
+    instructionEl.innerHTML = `
+      <div style="text-align: right; line-height: 2;">
+ادائیگی کا طریقہ:<br>
+اوپر دی گئی QR Code تصویر ڈاؤن لوڈ کریں یا سکرین شاٹ لیں۔<br>
+JazzCash ایپ کھولیں اور نیچے درمیانی لال بٹن پر کلک کریں۔<br>
+Enter Till ID کے ساتھ والے بٹن سے ڈاؤن لوڈ شدہ تصویر بھیجیں۔<br>
+رقم 500 یا اس سے زیادہ لکھیں اور ادائیگی مکمل کریں۔<br>
+ادائیگی کے بعد نیچے رقم لکھ کر Submit Request کریں۔<br>
+تصدیق کے بعد رقم آپ کے بیلنس میں شامل ہو جائے گی۔<br>
+شکریہ۔
+      </div>
+    `;
   } else {
     tabE.classList.add('active-tab','easy-active');
     tabJ.classList.remove('active-tab');
-    instructionEl.textContent = 'Easypaisa کے ذریعے رقم بھیجنے کا طریقہ:\nاوپر دی گئی تصویر کا سکرین شاٹ لیں یا Download کریں۔\nEasypaisa ایپ کھولیں اور بالکل نیچے موجود درمیانی سبز بٹن پر کلک کریں۔\nاس کے بعد Scan from Gallery پر کلک کر کے Download کی گئی تصویر سینڈ کریں۔\nEasypaisa میں اماونٹ لکھیں اور ادائیگی کریں 500 یا اس سے زیادہ۔\nرقم بھیجنے کے بعد نیچے اماونٹ لکھیں Submit Request بٹن کلک کریں۔\nجو رقم آپ نے بھیجی ہو گی تصدیق کے بعد آپ کے بیلنس میں جمع کر دی جائے گی۔\nشکریہ۔';
+    
+    // Set Easypaisa (Orange) colors
+    qrContainer.classList.add('easypaisa-mode');
+    downloadBtn.classList.add('easypaisa-mode');
+    instructionsCard.classList.add('easypaisa-mode');
+    instructionEl.classList.add('easypaisa-mode');
+    
+    instructionEl.innerHTML = `
+      <div style="text-align: right; line-height: 2;">
+ادائیگی کا طریقہ:<br>
+اوپر دی گئی QR Code تصویر ڈاؤن لوڈ کریں یا سکرین شاٹ لیں۔<br>
+Easypaisa ایپ کھولیں اور نیچے درمیانی سبز بٹن پر کلک کریں۔<br>
+Scan from Gallery پر کلک کر کے ڈاؤن لوڈ شدہ تصویر بھیجیں۔<br>
+رقم 500 یا اس سے زیادہ لکھیں اور ادائیگی مکمل کریں۔<br>
+ادائیگی کے بعد نیچے رقم لکھ کر Submit Request کریں۔<br>
+تصدیق کے بعد رقم آپ کے بیلنس میں شامل ہو جائے گی۔<br>
+شکریہ۔
+      </div>
+    `;
   }
 }
 
@@ -4610,7 +4707,7 @@ function downloadQRCode(){
   link.click();
   document.body.removeChild(link);
   
-  showMessage('gameMsg', '✅ QR Code Downloaded!', 'success');
+  showMessage('gameMsg', '✅ QR Code ڈاؤن لوڈ ہو گیا!', 'success');
 }
 
 // Check deposit lock status
