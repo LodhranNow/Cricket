@@ -522,6 +522,125 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 }
 
 /* ═══════════════════════════════════════════════
+   NOTIFICATION POPUP
+   ═══════════════════════════════════════════════ */
+.notification-popup {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(3,4,8,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.notification-popup.active {
+  display: flex;
+}
+
+.notification-content {
+  background: linear-gradient(135deg, rgba(18,22,40,0.95), rgba(14,17,30,0.98));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 2px solid rgba(240,192,64,0.4);
+  box-shadow: 0 0 60px rgba(240,192,64,0.25),
+              0 20px 80px rgba(0,0,0,0.7),
+              inset 0 1px 0 rgba(255,255,255,0.1);
+  padding: 36px 32px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+  animation: popupSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.notification-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounceIcon 0.6s ease;
+  filter: drop-shadow(0 0 20px rgba(240,192,64,0.5));
+}
+
+.notification-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(240,192,64,0.4);
+  text-transform: uppercase;
+}
+
+.notification-message {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.8;
+  margin-bottom: 28px;
+  padding: 0 10px;
+  white-space: pre-line;
+  direction: rtl;
+  text-align: right;
+}
+
+.notification-close-btn {
+  width: 100%;
+  padding: 16px 24px;
+  margin: 0;
+  background: linear-gradient(135deg, rgba(240,192,64,0.28), rgba(251,191,36,0.22));
+  border: 2px solid rgba(240,192,64,0.6);
+  color: var(--gold);
+  border-radius: 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 20px rgba(240,192,64,0.25);
+  text-transform: uppercase;
+}
+
+.notification-close-btn:hover {
+  background: linear-gradient(135deg, rgba(240,192,64,0.4), rgba(251,191,36,0.32));
+  box-shadow: 0 0 35px rgba(240,192,64,0.45);
+  transform: translateY(-2px);
+  border-color: rgba(240,192,64,0.8);
+}
+
+.notification-close-btn:active {
+  transform: translateY(0);
+  background: linear-gradient(135deg, rgba(240,192,64,0.5), rgba(251,191,36,0.4));
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bounceIcon {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(0.95); }
+  75% { transform: scale(1.05); }
+}
+
+/* ═══════════════════════════════════════════════
    REQUEST TOGGLE (For Both Deposit/Withdraw)
    ═══════════════════════════════════════════════ */
 .request-toggle {
@@ -621,23 +740,72 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 }
 
 /* ═══════════════════════════════════════════════
-   QR CODE CONTAINER
+   DEPOSIT 3-STEP PROCESS
    ═══════════════════════════════════════════════ */
-.qr-code-container {
+.deposit-step {
+  display: none;
+  animation: fadeInStep 0.3s ease;
+}
+
+.deposit-step.active-step {
+  display: block;
+}
+
+.step-indicator {
+  background: rgba(240,192,64,0.15);
+  border: 1.5px solid rgba(240,192,64,0.3);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+
+.instructions-card-deposit {
   background: rgba(12,15,26,0.78);
   border: 1.5px solid rgba(52,211,153,0.4);
   border-radius: var(--radius-sm);
   padding: 16px;
-  margin: 12px 0;
+  margin: 12px 0 16px;
+  transition: all 0.3s ease;
+}
+
+.instructions-card-deposit.easypaisa-mode {
+  border-color: rgba(251,191,36,0.4);
+}
+
+.urdu-instructions-deposit {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--neon-emerald);
+  direction: rtl;
+  text-align: right;
+  line-height: 2;
+}
+
+.urdu-instructions-deposit.easypaisa-mode {
+  color: var(--neon-amber);
+}
+
+.qr-code-container-deposit {
+  background: rgba(12,15,26,0.78);
+  border: 1.5px solid rgba(52,211,153,0.4);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 12px 0 16px;
   text-align: center;
   transition: all 0.3s ease;
 }
 
-.qr-code-container.easypaisa-mode {
+.qr-code-container-deposit.easypaisa-mode {
   border-color: rgba(251,191,36,0.4);
 }
 
-.qr-code-img {
+.qr-code-img-deposit {
   width: 100%;
   max-width: 280px;
   height: auto;
@@ -647,7 +815,7 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
-.btn-download-qr {
+.btn-download-qr-deposit {
   width: 100%;
   padding: 14px 18px;
   margin: 0;
@@ -665,61 +833,46 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   text-transform: none;
 }
 
-.btn-download-qr:hover {
+.btn-download-qr-deposit:hover {
   background: linear-gradient(135deg, rgba(52,211,153,0.34), rgba(52,211,153,0.24));
   box-shadow: 0 0 24px rgba(52,211,153,0.35);
   transform: translateY(-2px);
 }
 
-.btn-download-qr:active {
+.btn-download-qr-deposit:active {
   transform: translateY(0);
   background: linear-gradient(135deg, rgba(52,211,153,0.42), rgba(52,211,153,0.32));
 }
 
-/* Easypaisa mode for download button */
-.btn-download-qr.easypaisa-mode {
+.btn-download-qr-deposit.easypaisa-mode {
   background: linear-gradient(135deg, rgba(251,191,36,0.24), rgba(251,191,36,0.14));
   border-color: rgba(251,191,36,0.5);
   color: var(--neon-amber);
   box-shadow: 0 0 12px rgba(251,191,36,0.18);
 }
 
-.btn-download-qr.easypaisa-mode:hover {
+.btn-download-qr-deposit.easypaisa-mode:hover {
   background: linear-gradient(135deg, rgba(251,191,36,0.34), rgba(251,191,36,0.24));
   box-shadow: 0 0 24px rgba(251,191,36,0.35);
 }
 
-.btn-download-qr.easypaisa-mode:active {
+.btn-download-qr-deposit.easypaisa-mode:active {
   background: linear-gradient(135deg, rgba(251,191,36,0.42), rgba(251,191,36,0.32));
 }
 
-/* ═══════════════════════════════════════════════
-   INSTRUCTIONS CARD
-   ═══════════════════════════════════════════════ */
-.instructions-card {
-  background: rgba(12,15,26,0.78);
-  border: 1.5px solid rgba(52,211,153,0.4);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  margin: 12px 0;
-  transition: all 0.3s ease;
+.amount-input-container {
+  margin: 12px 0 16px;
 }
 
-.instructions-card.easypaisa-mode {
-  border-color: rgba(251,191,36,0.4);
-}
-
-.urdu-instructions {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--neon-emerald);
-  direction: rtl;
-  text-align: right;
-  line-height: 2;
-}
-
-.urdu-instructions.easypaisa-mode {
-  color: var(--neon-amber);
+@keyframes fadeInStep {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -821,6 +974,16 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   </div>
 </div>
 
+<!-- ═══ NOTIFICATION POPUP ═══ -->
+<div id="notificationPopup" class="notification-popup">
+  <div class="notification-content">
+    <div class="notification-icon" id="notificationIcon">🔔</div>
+    <div class="notification-title" id="notificationTitle">Notification</div>
+    <div class="notification-message" id="notificationMessage"></div>
+    <button class="notification-close-btn" onclick="closeNotification()">OK</button>
+  </div>
+</div>
+
 <!-- ═══ LOGIN SCREEN ═══ -->
 <div id="loginScreen" class="container">
   <div class="title">MINES</div>
@@ -895,20 +1058,43 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 
 </div><!-- /page-wrap -->
 
-<!-- ═══ DEPOSIT MODAL (Mirror of Withdraw Modal) ═══ -->
+<!-- ═══ DEPOSIT MODAL (3-Step Process) ═══ -->
 <div id="depositModal" class="modal">
   <div class="modal-content">
     <div class="modal-title">Deposit Request</div>
     
-    <!-- Payment Method Toggle (Same as Withdraw) -->
+    <!-- Payment Method Toggle -->
     <div class="request-toggle">
       <button id="depTabJazz" class="active-tab" onclick="switchDepositMethod('jazzcash')">JazzCash</button>
       <button id="depTabEasy" onclick="switchDepositMethod('easypaisa')">Easypaisa</button>
     </div>
     
-    <!-- QR Code Display -->
-    <div class="qr-code-container" id="qrCodeContainer">
-      <img id="qrCodeImage" src="data:image/jpeg;base64,/9j/4QDzRXhpZgAATU0AKgAAAAgAAwEyAAIAAAAUAAAAModpAAQAAAABAAAARoglAAQAAAABAAAA
+    <!-- Step 1: Instructions -->
+    <div id="depositStep1" class="deposit-step active-step">
+      <div class="step-indicator">Step 1/3 - Instructions</div>
+      <div class="instructions-card-deposit" id="instructionsCardDeposit">
+        <div class="urdu-instructions-deposit" id="depositInstructionStep1">
+          <div style="text-align: right; line-height: 2;">
+ادائیگی کا طریقہ:<br>
+اگلے صفحے پر QR Code تصویر ڈاؤن لوڈ کریں۔<br>
+JazzCash ایپ کھولیں اور نیچے درمیانی لال بٹن پر کلک کریں۔<br>
+Enter Till ID کے ساتھ والے بٹن سے ڈاؤن لوڈ شدہ تصویر بھیجیں۔<br>
+رقم 500 یا اس سے زیادہ لکھیں اور ادائیگی مکمل کریں۔<br>
+ادائیگی کے بعد یہاں واپس آ کر رقم لکھ کر Submit Request کریں۔<br>
+تصدیق کے بعد رقم آپ کے بیلنس میں شامل ہو جائے گی۔<br>
+شکریہ۔
+          </div>
+        </div>
+      </div>
+      <button class="btn-orange" onclick="goToDepositStep2()">Next - QR Code دیکھیں</button>
+      <button class="btn-red" onclick="closeDepositModal()">Cancel</button>
+    </div>
+    
+    <!-- Step 2: QR Code -->
+    <div id="depositStep2" class="deposit-step">
+      <div class="step-indicator">Step 2/3 - Download QR Code</div>
+      <div class="qr-code-container-deposit" id="qrCodeContainerDeposit">
+        <img id="qrCodeImageDeposit" src="data:image/jpeg;base64,/9j/4QDzRXhpZgAATU0AKgAAAAgAAwEyAAIAAAAUAAAAModpAAQAAAABAAAARoglAAQAAAABAAAA
 qgAAAAAyMDI2OjAyOjA4IDEzOjA3OjExAAAFkAMAAgAAABQAAACIkpEAAgAAAAQwMDAAkBEAAgAA
 AAcAAACckpAAAgAAAAQ4NzUAkBAAAgAAAAcAAACjAAAAADIwMjY6MDI6MDggMTg6MDU6MzQAKzA1
 OjAwACswNTowMAAAAgAHAAUAAAADAAAAyAAdAAIAAAALAAAA4AAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -4186,37 +4372,33 @@ ck2EOAPnOuj+pxac2gGTofSUAA2nRKKdKUIUAynSsAAAAAAAAAABwaAAJAJZKAAGgAKAAAAABxXo
 jmoB9KtJPwQSAfFkoABTRm8QnRAH1t/1djI0yIACLmn/AL0t+KSQD5slAAKaAAAACQUJsAPrVq0s
 +CUIaAR0otaoSASuQgAogAAaKE2gH0nUh840SkgA+a4SQASQOABTQAEgACgJAJZKGgANQcgAyUAA
 po0kAliAAU1KbAm+AOlPSgAEqQSAAAAAkAMlAAKaEgBkoABLQkAMlAAKaOAAAAAAAAJADJQ4ABr9
-IXRAA5tjUfKrS//Z" alt="QR Code" class="qr-code-img">
-      <button class="btn-download-qr" id="downloadQrBtn" onclick="downloadQRCode()">
-        <span style="font-size:18px;">⬇️</span> QR Code ڈاؤن لوڈ کریں
-      </button>
-    </div>
-    
-    <!-- Instructions Card -->
-    <div class="instructions-card" id="instructionsCard">
-      <div class="urdu-instructions" id="depositInstruction">
-        <div style="text-align: right; line-height: 2;">
-ادائیگی کا طریقہ:<br>
-اوپر دی گئی QR Code تصویر ڈاؤن لوڈ کریں یا سکرین شاٹ لیں۔<br>
-JazzCash ایپ کھولیں اور نیچے درمیانی لال بٹن پر کلک کریں۔<br>
-Enter Till ID کے ساتھ والے بٹن سے ڈاؤن لوڈ شدہ تصویر بھیجیں۔<br>
-رقم 500 یا اس سے زیادہ لکھیں اور ادائیگی مکمل کریں۔<br>
-ادائیگی کے بعد نیچے رقم لکھ کر Submit Request کریں۔<br>
-تصدیق کے بعد رقم آپ کے بیلنس میں شامل ہو جائے گی۔<br>
-شکریہ۔
-        </div>
+IXRAA5tjUfKrS//Z" alt="QR Code" class="qr-code-img-deposit">
+        <button class="btn-download-qr-deposit" id="downloadQrBtnDeposit" onclick="downloadQRCodeDeposit()">
+          <span style="font-size:18px;">⬇️</span> QR Code ڈاؤن لوڈ کریں
+        </button>
       </div>
+      <button class="btn-orange" id="nextToAmountBtn" onclick="goToDepositStep3()" disabled>Next - رقم لکھیں</button>
+      <button class="btn-blue" onclick="goBackToDepositStep1()">Back - واپس</button>
+      <button class="btn-red" onclick="closeDepositModal()">Cancel</button>
     </div>
     
-    <!-- Amount Input -->
-    <input type="number" id="depositAmount" placeholder="Amount (Minimum Rs 500)" min="500">
-    
-    <!-- Cooldown Message -->
-    <div id="depositCooldown" style="display:none;" class="timer-msg"></div>
-    
-    <!-- Submit Button -->
-    <button class="btn-orange" onclick="submitDeposit()">Submit Request</button>
-    <button class="btn-red" onclick="closeModal('depositModal')">Cancel</button>
+    <!-- Step 3: Amount Input -->
+    <div id="depositStep3" class="deposit-step">
+      <div class="step-indicator">Step 3/3 - Enter Amount</div>
+      <div class="amount-input-container">
+        <label style="color: var(--text-muted); font-size: 14px; margin-bottom: 8px; display: block; text-align: right; direction: rtl;">
+          رقم جو آپ نے بھیجی ہے وہ یہاں لکھیں
+        </label>
+        <input type="number" id="depositAmount" placeholder="Amount (Minimum Rs 500)" min="500">
+      </div>
+      
+      <!-- Cooldown Message -->
+      <div id="depositCooldown" style="display:none;" class="timer-msg"></div>
+      
+      <button class="btn-green" onclick="submitDeposit()">Submit Request</button>
+      <button class="btn-blue" onclick="goBackToDepositStep2()">Back - واپس</button>
+      <button class="btn-red" onclick="closeDepositModal()">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -4634,6 +4816,8 @@ function getWinRate(){ return WIN_RATES[gameState.minesCount] || 0.10; }
 
 let depositMethod = 'jazzcash';
 let depositLockTimer = null;
+let currentDepositStep = 1;
+let qrCodeDownloaded = false;
 
 // Deposit method switching
 function switchDepositMethod(method){
@@ -4641,10 +4825,12 @@ function switchDepositMethod(method){
   depositMethod = method;
   const tabJ = document.getElementById('depTabJazz');
   const tabE = document.getElementById('depTabEasy');
-  const qrContainer = document.getElementById('qrCodeContainer');
-  const downloadBtn = document.getElementById('downloadQrBtn');
-  const instructionsCard = document.getElementById('instructionsCard');
-  const instructionEl = document.getElementById('depositInstruction');
+  
+  // Update instructions card colors
+  const instructionsCard = document.getElementById('instructionsCardDeposit');
+  const instructionEl = document.getElementById('depositInstructionStep1');
+  const qrContainer = document.getElementById('qrCodeContainerDeposit');
+  const downloadBtn = document.getElementById('downloadQrBtnDeposit');
   
   if(method === 'jazzcash'){
     tabJ.classList.add('active-tab');
@@ -4652,54 +4838,94 @@ function switchDepositMethod(method){
     tabE.classList.remove('active-tab','easy-active');
     
     // Set JazzCash (Green) colors
-    qrContainer.classList.remove('easypaisa-mode');
-    downloadBtn.classList.remove('easypaisa-mode');
-    instructionsCard.classList.remove('easypaisa-mode');
-    instructionEl.classList.remove('easypaisa-mode');
+    if(instructionsCard) instructionsCard.classList.remove('easypaisa-mode');
+    if(instructionEl) instructionEl.classList.remove('easypaisa-mode');
+    if(qrContainer) qrContainer.classList.remove('easypaisa-mode');
+    if(downloadBtn) downloadBtn.classList.remove('easypaisa-mode');
     
-    instructionEl.innerHTML = `
-      <div style="text-align: right; line-height: 2;">
+    if(instructionEl){
+      instructionEl.innerHTML = `
+        <div style="text-align: right; line-height: 2;">
 ادائیگی کا طریقہ:<br>
-اوپر دی گئی QR Code تصویر ڈاؤن لوڈ کریں یا سکرین شاٹ لیں۔<br>
+اگلے صفحے پر QR Code تصویر ڈاؤن لوڈ کریں۔<br>
 JazzCash ایپ کھولیں اور نیچے درمیانی لال بٹن پر کلک کریں۔<br>
 Enter Till ID کے ساتھ والے بٹن سے ڈاؤن لوڈ شدہ تصویر بھیجیں۔<br>
 رقم 500 یا اس سے زیادہ لکھیں اور ادائیگی مکمل کریں۔<br>
-ادائیگی کے بعد نیچے رقم لکھ کر Submit Request کریں۔<br>
+ادائیگی کے بعد یہاں واپس آ کر رقم لکھ کر Submit Request کریں۔<br>
 تصدیق کے بعد رقم آپ کے بیلنس میں شامل ہو جائے گی۔<br>
 شکریہ۔
-      </div>
-    `;
+        </div>
+      `;
+    }
   } else {
     tabE.classList.add('active-tab','easy-active');
     tabJ.classList.remove('active-tab');
     
     // Set Easypaisa (Orange) colors
-    qrContainer.classList.add('easypaisa-mode');
-    downloadBtn.classList.add('easypaisa-mode');
-    instructionsCard.classList.add('easypaisa-mode');
-    instructionEl.classList.add('easypaisa-mode');
+    if(instructionsCard) instructionsCard.classList.add('easypaisa-mode');
+    if(instructionEl) instructionEl.classList.add('easypaisa-mode');
+    if(qrContainer) qrContainer.classList.add('easypaisa-mode');
+    if(downloadBtn) downloadBtn.classList.add('easypaisa-mode');
     
-    instructionEl.innerHTML = `
-      <div style="text-align: right; line-height: 2;">
+    if(instructionEl){
+      instructionEl.innerHTML = `
+        <div style="text-align: right; line-height: 2;">
 ادائیگی کا طریقہ:<br>
-اوپر دی گئی QR Code تصویر ڈاؤن لوڈ کریں یا سکرین شاٹ لیں۔<br>
+اگلے صفحے پر QR Code تصویر ڈاؤن لوڈ کریں۔<br>
 Easypaisa ایپ کھولیں اور نیچے درمیانی سبز بٹن پر کلک کریں۔<br>
 Scan from Gallery پر کلک کر کے ڈاؤن لوڈ شدہ تصویر بھیجیں۔<br>
 رقم 500 یا اس سے زیادہ لکھیں اور ادائیگی مکمل کریں۔<br>
-ادائیگی کے بعد نیچے رقم لکھ کر Submit Request کریں۔<br>
+ادائیگی کے بعد یہاں واپس آ کر رقم لکھ کر Submit Request کریں۔<br>
 تصدیق کے بعد رقم آپ کے بیلنس میں شامل ہو جائے گی۔<br>
 شکریہ۔
-      </div>
-    `;
+        </div>
+      `;
+    }
   }
 }
 
-// Download QR Code image
-function downloadQRCode(){
+// Deposit step navigation
+function goToDepositStep2(){
+  playButtonMusic();
+  document.getElementById('depositStep1').classList.remove('active-step');
+  document.getElementById('depositStep2').classList.add('active-step');
+  currentDepositStep = 2;
+}
+
+function goToDepositStep3(){
+  playButtonMusic();
+  document.getElementById('depositStep2').classList.remove('active-step');
+  document.getElementById('depositStep3').classList.add('active-step');
+  currentDepositStep = 3;
+}
+
+// Back navigation functions
+function goBackToDepositStep1(){
+  playButtonMusic();
+  document.getElementById('depositStep2').classList.remove('active-step');
+  document.getElementById('depositStep1').classList.add('active-step');
+  currentDepositStep = 1;
+}
+
+function goBackToDepositStep2(){
+  playButtonMusic();
+  document.getElementById('depositStep3').classList.remove('active-step');
+  document.getElementById('depositStep2').classList.add('active-step');
+  currentDepositStep = 2;
+}
+
+// Close deposit modal
+function closeDepositModal(){
+  playButtonMusic();
+  closeModal('depositModal');
+}
+
+// Download QR Code for deposit
+function downloadQRCodeDeposit(){
   playButtonMusic();
   playSound('success');
   
-  const qrImage = document.getElementById('qrCodeImage');
+  const qrImage = document.getElementById('qrCodeImageDeposit');
   const link = document.createElement('a');
   link.href = qrImage.src;
   link.download = 'QR_Code_TILL_ID_982498210.jpg';
@@ -4707,7 +4933,32 @@ function downloadQRCode(){
   link.click();
   document.body.removeChild(link);
   
+  // Enable next button after download
+  qrCodeDownloaded = true;
+  document.getElementById('nextToAmountBtn').disabled = false;
+  
   showMessage('gameMsg', '✅ QR Code ڈاؤن لوڈ ہو گیا!', 'success');
+}
+
+// Open deposit modal - reset to step 1
+function openDepositModal(){
+  playButtonMusic();
+  currentDepositStep = 1;
+  qrCodeDownloaded = false;
+  
+  // Reset all steps
+  document.getElementById('depositStep1').classList.add('active-step');
+  document.getElementById('depositStep2').classList.remove('active-step');
+  document.getElementById('depositStep3').classList.remove('active-step');
+  
+  // Disable next button in step 2
+  document.getElementById('nextToAmountBtn').disabled = true;
+  
+  // Clear amount input
+  document.getElementById('depositAmount').value = '';
+  
+  // Open modal
+  document.getElementById('depositModal').classList.add('active');
 }
 
 // Check deposit lock status
@@ -5149,6 +5400,15 @@ function listenToUserData(phone){
     
     gameState.balance = d.balance||0;
     updateDisplay();
+    
+    // Check for admin notifications
+    if(d.notification && d.notification.message){
+      showNotification(
+        d.notification.message,
+        d.notification.title || 'اطلاع',
+        d.notification.icon || '🔔'
+      );
+    }
   });
 }
 
@@ -5323,6 +5583,37 @@ async function handleLogout(){
 
 function showKickedScreen(){ 
   document.getElementById('kickedOverlay').classList.add('active'); 
+}
+
+/* ─── Notification Popup ─── */
+function showNotification(message, title = 'اطلاع', icon = '🔔'){
+  playSound('success');
+  
+  const popup = document.getElementById('notificationPopup');
+  const titleEl = document.getElementById('notificationTitle');
+  const messageEl = document.getElementById('notificationMessage');
+  const iconEl = document.getElementById('notificationIcon');
+  
+  titleEl.textContent = title;
+  messageEl.textContent = message;
+  iconEl.textContent = icon;
+  
+  popup.classList.add('active');
+  
+  // Clear notification from database after showing
+  setTimeout(async () => {
+    try {
+      await window.dbUpdate(window.dbRef(window.db, `users/${gameState.userPhone}/notification`), null);
+    } catch(e) {
+      console.error('Failed to clear notification:', e);
+    }
+  }, 500);
+}
+
+function closeNotification(){
+  playButtonMusic();
+  const popup = document.getElementById('notificationPopup');
+  popup.classList.remove('active');
 }
 
 /* ─── Grid & Tile logic ─── */
