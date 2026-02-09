@@ -75,9 +75,10 @@ body::before {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--blur-main)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--blur-main)) saturate(1.4);
-  border: 1.5px solid var(--glass-border);
+  border: 2px solid rgba(34,211,238,0.3);
   border-radius: var(--radius);
   box-shadow: 0 8px 40px rgba(0,0,0,.52),
+              0 0 30px rgba(34,211,238,0.15),
               inset 0 1px 0 rgba(255,255,255,.07);
   max-width:480px; width:100%;
   padding:28px 22px 32px;
@@ -313,10 +314,10 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 .tile.revealed { cursor:default; }
 
 .tile.safe {
-  background: linear-gradient(150deg, rgba(240,192,64,.32), rgba(251,191,36,.16));
-  border-color: rgba(240,192,64,.65);
-  box-shadow: 0 0 18px rgba(240,192,64,.36),
-              inset 0 0 10px rgba(240,192,64,.1);
+  background: linear-gradient(150deg, rgba(34,211,238,0.28), rgba(6,182,212,0.14));
+  border-color: rgba(34,211,238,0.6);
+  box-shadow: 0 0 18px rgba(34,211,238,0.32),
+              inset 0 0 10px rgba(34,211,238,0.08);
   animation: tileIn .28s cubic-bezier(.34,1.56,.64,1);
 }
 .tile.mine {
@@ -407,87 +408,134 @@ button:disabled { opacity:.38; cursor:not-allowed; }
 }
 
 /* ═══════════════════════════════════════════════
-   GAME ACTION BUTTONS (NEW LAYOUT)
+   GAME PLAY CARD & ACTION BUTTONS
    ═══════════════════════════════════════════════ */
-.game-action-buttons {
+.game-play-card {
+  background: rgba(12,15,26,0.78);
+  border: 2px solid rgba(34,211,238,0.4);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 14px 0;
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 0 0 20px rgba(34,211,238,0.15);
+}
+
+.game-play-card::-webkit-scrollbar { width: 6px; }
+.game-play-card::-webkit-scrollbar-track { background: transparent; }
+.game-play-card::-webkit-scrollbar-thumb { 
+  background: rgba(34,211,238,0.3); 
+  border-radius: 3px; 
+}
+.game-play-card::-webkit-scrollbar-thumb:hover { 
+  background: rgba(34,211,238,0.5); 
+}
+
+/* NEW COLORFUL 4 BUTTONS LAYOUT - ALL SAME SIZE */
+.game-action-buttons-new {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin: 18px 0;
+  margin: 18px 0 0;
 }
 
-.game-btn-left, .game-btn-right {
-  padding: 15px 10px;
-  border-radius: var(--radius-sm);
+.game-action-buttons-new button {
+  padding: 15px 12px;
+  border-radius: 12px;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 1.2px;
   cursor: pointer;
-  border: none;
+  border: 2px solid;
   position: relative;
   overflow: hidden;
-  transition: transform .18s, box-shadow .25s, background .22s;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   text-transform: uppercase;
   text-align: center;
   width: 100%;
+  height: 100%;
+  min-height: 58px;
 }
 
-.game-btn-left:hover:not(:disabled),
-.game-btn-right:hover:not(:disabled) {
-  transform: translateY(-2px);
+.game-action-buttons-new button:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
 }
 
-.game-btn-left:active:not(:disabled),
-.game-btn-right:active:not(:disabled) {
-  transform: translateY(0);
+.game-action-buttons-new button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
 }
 
-.game-btn-left:disabled,
-.game-btn-right:disabled {
-  opacity: .38;
+.game-action-buttons-new button:disabled {
+  opacity: .4;
   cursor: not-allowed;
+  transform: none !important;
 }
 
-/* Left side buttons (GREEN like Deposit) */
-.game-btn-left {
-  background: rgba(52,211,153,.18);
-  border: 1.5px solid rgba(52,211,153,.55);
-  color: var(--neon-emerald);
-  box-shadow: 0 0 12px rgba(52,211,153,.18), inset 0 1px 0 rgba(52,211,153,.14);
+/* CASHOUT - Emerald Green (Dopamine Trigger!) */
+.game-btn-cashout {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.15));
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 
+              inset 0 1px 0 rgba(16, 185, 129, 0.2);
 }
 
-.game-btn-left:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(52,211,153,.4);
-  background: rgba(52,211,153,.26);
+.game-btn-cashout:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(5, 150, 105, 0.25));
+  box-shadow: 0 0 35px rgba(16, 185, 129, 0.6),
+              0 5px 20px rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.8);
 }
 
-.game-btn-left:active:not(:disabled) {
-  background: rgba(52,211,153,.34);
+/* RESET - Electric Blue */
+.game-btn-reset {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.15));
+  border-color: rgba(59, 130, 246, 0.6);
+  color: #3b82f6;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3),
+              inset 0 1px 0 rgba(59, 130, 246, 0.2);
 }
 
-/* Right side buttons (ORANGE like Withdraw) */
-.game-btn-right {
-  background: rgba(251,191,36,.15);
-  border: 1.5px solid rgba(251,191,36,.5);
-  color: var(--neon-amber);
-  box-shadow: 0 0 12px rgba(251,191,36,.15);
+.game-btn-reset:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(37, 99, 235, 0.25));
+  box-shadow: 0 0 35px rgba(59, 130, 246, 0.6),
+              0 5px 20px rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.8);
 }
 
-.game-btn-right:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(251,191,36,.35);
-  background: rgba(251,191,36,.24);
+/* BET - Vibrant Purple */
+.game-btn-bet {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(147, 51, 234, 0.15));
+  border-color: rgba(168, 85, 247, 0.6);
+  color: #a855f7;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3),
+              inset 0 1px 0 rgba(168, 85, 247, 0.2);
 }
 
-.game-btn-right:active:not(:disabled) {
-  background: rgba(251,191,36,.32);
+.game-btn-bet:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.4), rgba(147, 51, 234, 0.25));
+  box-shadow: 0 0 35px rgba(168, 85, 247, 0.6),
+              0 5px 20px rgba(168, 85, 247, 0.3);
+  border-color: rgba(168, 85, 247, 0.8);
 }
 
-/* Specific button styles within the grid */
-#cashoutBtn { grid-column: 1; grid-row: 1; }
-#resetBtn { grid-column: 1; grid-row: 2; }
-#betBtn { grid-column: 2; grid-row: 1; }
-#minesBtn { grid-column: 2; grid-row: 2; }
+/* MINES - Hot Pink/Rose */
+.game-btn-mines {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(219, 39, 119, 0.15));
+  border-color: rgba(236, 72, 153, 0.6);
+  color: #ec4899;
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.3),
+              inset 0 1px 0 rgba(236, 72, 153, 0.2);
+}
+
+.game-btn-mines:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.4), rgba(219, 39, 119, 0.25));
+  box-shadow: 0 0 35px rgba(236, 72, 153, 0.6),
+              0 5px 20px rgba(236, 72, 153, 0.3);
+  border-color: rgba(236, 72, 153, 0.8);
+}
 
 /* ═══════════════════════════════════════════════
    KICKED OVERLAY
@@ -638,6 +686,180 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   25% { transform: scale(1.1); }
   50% { transform: scale(0.95); }
   75% { transform: scale(1.05); }
+}
+
+/* ═══════════════════════════════════════════════
+   NOTIFICATION BUTTON & PANEL
+   ═══════════════════════════════════════════════ */
+.notification-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(34,211,238,0.25), rgba(6,182,212,0.15));
+  border: 2px solid rgba(34,211,238,0.5);
+  color: #22d3ee;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 0 15px rgba(34,211,238,0.3);
+  margin: 0 auto 12px;
+}
+
+.notification-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 25px rgba(34,211,238,0.5);
+  background: linear-gradient(135deg, rgba(34,211,238,0.35), rgba(6,182,212,0.25));
+}
+
+.notification-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-deep);
+}
+
+.notification-badge.active {
+  display: flex;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.notification-panel {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 90%;
+  max-width: 400px;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(18,22,40,0.98), rgba(14,17,30,0.98));
+  backdrop-filter: blur(24px);
+  border-left: 2px solid rgba(240,192,64,0.4);
+  box-shadow: -5px 0 40px rgba(0,0,0,0.7);
+  z-index: 9998;
+  transition: right 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow-y: auto;
+}
+
+.notification-panel.active {
+  right: 0;
+}
+
+.notification-panel-header {
+  background: rgba(240,192,64,0.15);
+  border-bottom: 2px solid rgba(240,192,64,0.3);
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.notification-panel-header h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.close-notification-btn {
+  background: rgba(251,113,133,0.2);
+  border: 2px solid rgba(251,113,133,0.4);
+  color: var(--neon-rose);
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.close-notification-btn:hover {
+  background: rgba(251,113,133,0.3);
+  transform: rotate(90deg);
+}
+
+.notification-panel-content {
+  padding: 20px;
+}
+
+.no-notifications {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 40px 20px;
+  direction: rtl;
+}
+
+.notification-item {
+  background: rgba(12,15,26,0.8);
+  border: 1.5px solid rgba(240,192,64,0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  animation: slideInRight 0.3s ease;
+}
+
+.notification-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notification-item-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.notification-item-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notification-item-message {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  direction: rtl;
+  text-align: right;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1005,7 +1227,12 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   </div>
 
   <div class="title">MINES</div>
-  <div id="gameMsg" class="msg"></div>
+  
+  <!-- Notification Button (Fixed Position) -->
+  <button class="notification-btn" id="notificationBtn" onclick="toggleNotificationPanel()">
+    <span id="notificationIcon">🔔</span>
+    <span class="notification-badge" id="notificationBadge">0</span>
+  </button>
 
   <!-- Deposit/Withdraw Button Row -->
   <div class="btn-row">
@@ -1031,28 +1258,47 @@ button:disabled { opacity:.38; cursor:not-allowed; }
     <div style="font-size:13px; color:var(--text-muted);" id="pendingWithdrawNumber"></div>
   </div>
 
-  <div class="balance-section">
-    <div class="balance-item">
-      <div class="balance-label">Balance</div>
-      <div class="balance-value">Rs <span id="balance">0</span></div>
+  <!-- Game Play Area Card (Scrollable) -->
+  <div class="game-play-card">
+    <div class="balance-section">
+      <div class="balance-item">
+        <div class="balance-label">Balance</div>
+        <div class="balance-value">Rs <span id="balance">0</span></div>
+      </div>
+      <div class="balance-item">
+        <div class="balance-label">Current Win</div>
+        <div class="balance-value">Rs <span id="win">0</span></div>
+      </div>
     </div>
-    <div class="balance-item">
-      <div class="balance-label">Current Win</div>
-      <div class="balance-value">Rs <span id="win">0</span></div>
+
+    <div class="grid" id="gameGrid"></div>
+
+    <!-- 4 COLORFUL ACTION BUTTONS -->
+    <div class="game-action-buttons-new">
+      <button class="game-btn-bet" id="betBtn" onclick="openBetModal()">
+        <span style="font-size:20px;">💵</span> BET <span id="betDisplay">0</span>
+      </button>
+      <button class="game-btn-mines" id="minesBtn" onclick="openMinesModal()">
+        <span style="font-size:20px;">💣</span> <span id="minesDisplay">3</span> MINES
+      </button>
+      <button class="game-btn-cashout" id="cashoutBtn" onclick="cashout()" disabled>
+        <span style="font-size:20px;">💰</span> CASHOUT
+      </button>
+      <button class="game-btn-reset" id="resetBtn" onclick="resetGame()">
+        <span style="font-size:20px;">🔄</span> RESET
+      </button>
     </div>
   </div>
+</div>
 
-  <div class="grid" id="gameGrid"></div>
-
-  <!-- NEW GAME ACTION BUTTONS LAYOUT -->
-  <div class="game-action-buttons">
-    <!-- Left side - Green buttons -->
-    <button class="game-btn-left" id="cashoutBtn" onclick="cashout()" disabled>CASHOUT</button>
-    <button class="game-btn-left" id="resetBtn" onclick="resetGame()">RESET</button>
-    
-    <!-- Right side - Orange buttons -->
-    <button class="game-btn-right" id="betBtn" onclick="openBetModal()">BET RS <span id="betDisplay">0</span></button>
-    <button class="game-btn-right" id="minesBtn" onclick="openMinesModal()">💣 MINES: <span id="minesDisplay">3</span></button>
+<!-- Notification Panel (Slide from right) -->
+<div id="notificationPanel" class="notification-panel">
+  <div class="notification-panel-header">
+    <h3>Notifications</h3>
+    <button class="close-notification-btn" onclick="closeNotificationPanel()">✕</button>
+  </div>
+  <div class="notification-panel-content" id="notificationPanelContent">
+    <div class="no-notifications">No notifications yet</div>
   </div>
 </div>
 
@@ -4424,7 +4670,7 @@ IXRAA5tjUfKrS//Z" alt="QR Code" class="qr-code-img-deposit">
     
     <!-- Submit Button -->
     <button class="btn-orange" onclick="submitWithdraw()">Submit Request</button>
-    <button class="btn-red" onclick="closeModal('withdrawModal')">Cancel</button>
+    <button class="btn-red" onclick="closeWithdrawModal()">Cancel</button>
   </div>
 </div>
 
@@ -4818,6 +5064,71 @@ let depositMethod = 'jazzcash';
 let depositLockTimer = null;
 let currentDepositStep = 1;
 let qrCodeDownloaded = false;
+let notifications = [];
+let notificationCount = 0;
+
+// Notification panel functions
+function toggleNotificationPanel(){
+  playButtonMusic();
+  const panel = document.getElementById('notificationPanel');
+  panel.classList.toggle('active');
+  
+  // Reset badge when opened
+  if(panel.classList.contains('active')){
+    const badge = document.getElementById('notificationBadge');
+    badge.classList.remove('active');
+    notificationCount = 0;
+    badge.textContent = '0';
+  }
+}
+
+function closeNotificationPanel(){
+  playButtonMusic();
+  document.getElementById('notificationPanel').classList.remove('active');
+}
+
+function addNotificationToPanel(message, title = 'اطلاع', icon = '🔔'){
+  notifications.unshift({
+    message: message,
+    title: title,
+    icon: icon,
+    time: new Date().toLocaleTimeString('ur-PK', { hour: '2-digit', minute: '2-digit' })
+  });
+  
+  // Update badge
+  notificationCount++;
+  const badge = document.getElementById('notificationBadge');
+  badge.textContent = notificationCount;
+  badge.classList.add('active');
+  
+  // Update panel content
+  updateNotificationPanel();
+}
+
+function updateNotificationPanel(){
+  const content = document.getElementById('notificationPanelContent');
+  
+  if(notifications.length === 0){
+    content.innerHTML = '<div class="no-notifications">کوئی اطلاع نہیں</div>';
+    return;
+  }
+  
+  let html = '';
+  notifications.forEach((notif, index) => {
+    html += `
+      <div class="notification-item">
+        <div class="notification-item-header">
+          <span style="font-size:24px;">${notif.icon}</span>
+          <span class="notification-item-time">${notif.time}</span>
+        </div>
+        <div class="notification-item-title">${notif.title}</div>
+        <div class="notification-item-message">${notif.message}</div>
+      </div>
+    `;
+  });
+  
+  content.innerHTML = html;
+}
 
 // Deposit method switching
 function switchDepositMethod(method){
@@ -4918,6 +5229,12 @@ function goBackToDepositStep2(){
 function closeDepositModal(){
   playButtonMusic();
   closeModal('depositModal');
+}
+
+// Close withdraw modal with music
+function closeWithdrawModal(){
+  playButtonMusic();
+  closeModal('withdrawModal');
 }
 
 // Download QR Code for deposit
@@ -5813,9 +6130,29 @@ function closeModal(id){
 }
 
 function showMessage(elId, text, type){
+  // For gameMsg, add to notification panel instead
+  if(elId === 'gameMsg'){
+    let icon = '🔔';
+    let title = 'Message';
+    
+    if(type === 'success'){
+      icon = '✅';
+      title = 'کامیابی';
+    } else if(type === 'error'){
+      icon = '❌';
+      title = 'خرابی';
+    }
+    
+    addNotificationToPanel(text, title, icon);
+    return;
+  }
+  
+  // For other messages (loginMsg etc), show normally
   const el = document.getElementById(elId);
-  el.textContent=text; el.className='msg '+type; el.style.display='block';
-  setTimeout(()=>el.style.display='none', 3000);
+  if(el){
+    el.textContent=text; el.className='msg '+type; el.style.display='block';
+    setTimeout(()=>el.style.display='none', 3000);
+  }
 }
 
 </script>
