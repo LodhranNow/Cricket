@@ -1134,8 +1134,8 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   <div class="title">MINES</div>
   <div class="subtitle">اپنا نام اور نمبر لکھیں</div>
   <div id="loginMsg" class="msg"></div>
-  <input type="text"  id="loginName"  placeholder="Your Name"   maxlength="50">
-  <input type="tel"   id="loginPhone" placeholder="03XXXXXXXXX" maxlength="11">
+  <input type="tel" id="loginPhone" placeholder="03XXXXXXXXX" maxlength="11">
+  <input type="password" id="loginPassword" placeholder="Password (8 digits)" maxlength="8" inputmode="numeric" pattern="[0-9]*">
   <button class="btn-green" onclick="handleLogin()">LOGIN / لاگ ان</button>
 </div>
 
@@ -1144,7 +1144,6 @@ button:disabled { opacity:.38; cursor:not-allowed; }
   <div class="user-info">
     <div>
       <div class="user-name"  id="displayName"></div>
-      <div class="user-phone" id="displayPhone"></div>
     </div>
     <button class="logout-btn" onclick="handleLogout()">Logout</button>
   </div>
@@ -5574,14 +5573,22 @@ function listenToUserData(phone){
 async function handleLogin(){
   playButtonMusic();
   await fbReady();
-  const name  = document.getElementById('loginName').value.trim();
   const phone = document.getElementById('loginPhone').value.trim();
-  if(!name){ showMessage('loginMsg','Please enter your name!','error'); return; }
-  if(!/^03[0-9]{9}$/.test(phone)){ showMessage('loginMsg','Invalid phone! Must be 03XXXXXXXXX','error'); return; }
+  const password = document.getElementById('loginPassword').value.trim();
+  
+  // Validation
+  if(!/^03[0-9]{9}$/.test(phone)){ 
+    showMessage('loginMsg','Invalid phone! Must be 03XXXXXXXXX','error'); 
+    return; 
+  }
+  if(!/^[0-9]{8}$/.test(password)){ 
+    showMessage('loginMsg','Password must be exactly 8 digits!','error'); 
+    return; 
+  }
+  
   showMessage('loginMsg','Logging in…','success');
 
   const deviceId = getDeviceFingerprint();
-  const namePairKey = `${name}_${phone}`;
 
   try {
     // Check: Banned phones
@@ -5603,19 +5610,18 @@ async function handleLogin(){
       }
     }
     
-    // Check: Name-Phone pair lock
-    const pairSnap = await window.dbGet(window.dbRef(window.db, `namePhonePairs/${namePairKey}`));
-    if(pairSnap.exists()){
-      const pairData = pairSnap.val();
-      if(pairData.banned){
-        showMessage('loginMsg','','error');
-        setTimeout(() => showKickedScreen(), 500);
+    // Password verification
+    const storedPassword = localStorage.getItem(`password_${phone}`);
+    
+    if(storedPassword){
+      // Existing user - verify password
+      if(storedPassword !== password){
+        showMessage('loginMsg','❌ Incorrect password!','error');
         return;
       }
-      if(pairData.deviceId !== deviceId){
-        showMessage('loginMsg','❌ This name-phone combination is locked to another device!','error');
-        return;
-      }
+    } else {
+      // New user - store password
+      localStorage.setItem(`password_${phone}`, password);
     }
     
     // Check: Device limit (max 7 users per device)
@@ -5629,14 +5635,9 @@ async function handleLogin(){
         showMessage('loginMsg','❌ Maximum 7 accounts per device!','error');
         return;
       }
-      
-      if(usersOnDevice[phone] && usersOnDevice[phone].name !== name){
-        showMessage('loginMsg','❌ Phone number registered with different name!','error');
-        return;
-      }
     }
     
-    // Check: User already logged in or banned
+    // Check: User already logged in
     const userSnap = await window.dbGet(window.dbRef(window.db, `users/${phone}`));
     if(userSnap.exists()){
       const userData = userSnap.val();
@@ -5650,11 +5651,6 @@ async function handleLogin(){
         showMessage('loginMsg','یہ اکاؤنٹ پہلے سے کسی اور ڈیوائس پر لاگ ان ہے!','error');
         return;
       }
-      
-      if(userData.name !== name){
-        showMessage('loginMsg','❌ Name does not match registered name!','error');
-        return;
-      }
     }
     
     // All checks passed - proceed with login
@@ -5662,6 +5658,7 @@ async function handleLogin(){
     const updates = {};
     
     let userData = userSnap.exists() ? userSnap.val() : null;
+    const name = phone; // Use phone as name
     
     // Update or create user data
     if(!userData){
@@ -5673,13 +5670,7 @@ async function handleLogin(){
       updates[`users/${phone}/deviceId`] = deviceId;
       updates[`users/${phone}/isOnline`] = true;
       updates[`users/${phone}/lastLogin`] = now;
-      updates[`users/${phone}/name`] = name;
     }
-    
-    // Lock name-phone pair to this device
-    updates[`namePhonePairs/${namePairKey}/deviceId`] = deviceId;
-    updates[`namePhonePairs/${namePairKey}/registeredAt`] = now;
-    updates[`namePhonePairs/${namePairKey}/locked`] = true;
     
     // Track device usage
     updates[`deviceTracking/${deviceId}/users/${phone}/name`] = name;
@@ -5694,7 +5685,6 @@ async function handleLogin(){
     gameState.balance = userData ? (userData.balance || 0) : 0;
     
     document.getElementById('displayName').textContent = gameState.userName;
-    document.getElementById('displayPhone').textContent = phone;
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('gameScreen').classList.remove('hidden');
     
