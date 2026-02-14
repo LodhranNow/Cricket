@@ -4580,22 +4580,25 @@ IXRAA5tjUfKrS//Z" alt="QR Code" class="qr-code-img-deposit">
 </div>
 
 <!-- ═══ BET MODAL ═══ -->
-<div id="betModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title">Set Bet Amount</div>
-    <input type="number" id="betInput" placeholder="Amount (Rs 100 – 10,000)" min="100" max="10000">
-    <button class="btn-blue" onclick="setBet()">Set Bet</button>
-    <button class="btn-red"  onclick="closeModal('betModal')">Cancel</button>
-  </div>
-</div>
-
 <!-- ═══ MINES MODAL ═══ -->
 <div id="minesModal" class="modal">
   <div class="modal-content">
-    <div class="modal-title">💣 Set Mines Count</div>
-    <input type="number" id="minesInput" placeholder="Mines (1–24)" min="1" max="24" value="3">
-    <button class="btn-red"  onclick="setMines()">Set Mines</button>
+    <div class="modal-title">💣 Select Mines Count</div>
+    <div id="minesSelectionGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0;">
+      <!-- Mines options will be generated here -->
+    </div>
     <button class="btn-blue" onclick="closeModal('minesModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- ═══ BET AMOUNT MODAL ═══ -->
+<div id="betModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">💵 Select Bet Amount</div>
+    <div id="betSelectionGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0;">
+      <!-- Bet amounts will be generated here -->
+    </div>
+    <button class="btn-blue" onclick="closeModal('betModal')">Cancel</button>
   </div>
 </div>
 
@@ -5927,17 +5930,26 @@ function openBetModal(){
     alert('Cannot change bet during active game!'); 
     return; 
   }
+  
+  // Bet amounts: 50, 80, 100, 200, 300, 400, 500, 800, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000
+  const betAmounts = [50, 80, 100, 200, 300, 400, 500, 800, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
+  const grid = document.getElementById('betSelectionGrid');
+  grid.innerHTML = '';
+  
+  for(const amount of betAmounts){
+    const btn = document.createElement('button');
+    btn.className = 'btn-green';
+    btn.textContent = 'Rs ' + amount;
+    btn.style.padding = '12px';
+    btn.style.fontSize = '14px';
+    btn.onclick = () => selectBet(amount);
+    grid.appendChild(btn);
+  }
+  
   document.getElementById('betModal').classList.add('active');
 }
 
-async function setBet(){
-  const a = parseInt(document.getElementById('betInput').value);
-  if(!a||a<100||a>10000){ 
-    playSound('error');
-    alert('Bet must be Rs 100–10,000'); 
-    return; 
-  }
-  
+async function selectBet(a){
   // Check if bet is already set with the same amount
   if(gameState.betSet && gameState.currentBet === a){
     playSound('error');
@@ -5976,19 +5988,56 @@ function openMinesModal(){
     alert('Cannot change mines during game!'); 
     return; 
   }
+  
+  // Generate mines selection buttons (1-24)
+  const grid = document.getElementById('minesSelectionGrid');
+  grid.innerHTML = '';
+  for(let i = 1; i <= 24; i++){
+    const btn = document.createElement('button');
+    btn.className = 'btn-red';
+    btn.textContent = i;
+    btn.style.padding = '12px';
+    btn.style.fontSize = '16px';
+    btn.onclick = () => selectMines(i);
+    grid.appendChild(btn);
+  }
+  
   document.getElementById('minesModal').classList.add('active');
 }
 
-function setMines(){
-  const c = parseInt(document.getElementById('minesInput').value);
-  if(!c||c<1||c>24){ 
+function selectMines(count){
+  playButtonMusic();
+  gameState.minesCount = count;
+  updateDisplay();
+  closeModal('minesModal');
+}
+
+function openBetModal(){
+  playButtonMusic();
+  if(gameState.gameActive){ 
     playSound('error');
-    alert('Mines must be 1–24'); 
+    alert('Cannot change bet during game!'); 
     return; 
   }
-  playButtonMusic();
-  gameState.minesCount=c; updateDisplay(); closeModal('minesModal');
+  
+  // Bet amounts: 50, 80, 100, 200, 300, 400, 500, 800, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000
+  const betAmounts = [50, 80, 100, 200, 300, 400, 500, 800, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
+  const grid = document.getElementById('betSelectionGrid');
+  grid.innerHTML = '';
+  
+  for(const amount of betAmounts){
+    const btn = document.createElement('button');
+    btn.className = 'btn-green';
+    btn.textContent = 'Rs ' + amount;
+    btn.style.padding = '12px';
+    btn.style.fontSize = '14px';
+    btn.onclick = () => selectBet(amount);
+    grid.appendChild(btn);
+  }
+  
+  document.getElementById('betModal').classList.add('active');
 }
+
 
 /* ─── UI helpers ─── */
 function closeModal(id){ 
